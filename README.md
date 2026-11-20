@@ -1,0 +1,32 @@
+# ChessLens
+
+Phase 1 ของ ChessLens เปิดให้เล่นหมากรุกกับ Stockfish ผ่านเบราว์เซอร์ในภาษาไทย
+
+## ติดตั้งและรัน
+
+ใช้ Node.js 20.19+ ในสาย 20 หรือ 22.12 ขึ้นไป พร้อม npm
+
+```sh
+npm ci
+npm run dev
+```
+
+เปิด URL ที่ Vite แสดง เลือกสีและระดับบอท แล้วกด **เกมใหม่** เดินหมากด้วยการลาก หรือคลิกหมากแล้วคลิกช่องปลายทาง การย้อนตาจะลบตาล่าสุดของคุณและตาที่บอทตอบกลับ ถ้าคุณเล่นดำ ตาเปิดของบอทจะยังอยู่
+
+เกมจะบันทึกอัตโนมัติในเบราว์เซอร์เดิมเมื่ออนุญาต localStorage ส่งออกเกมด้วย **คัดลอก PGN** หรือ **ดาวน์โหลด PGN** การคัดลอกต้องเปิดผ่าน localhost หรือ HTTPS ในเบราว์เซอร์ที่รองรับ Clipboard API
+
+ลิงก์ **ทดสอบ Stockfish** เปิดหน้าทดสอบเอนจินจาก Phase 0
+
+```sh
+npm run lint
+npm test
+npm run build
+npm run preview
+```
+
+หลัง `npm run preview` ลองเดินหมากและรอให้บอทตอบ เพื่อยืนยันว่า Worker และ WASM โหลดจาก `dist/` ได้ การเผยแพร่ใช้ static HTTP(S) server ที่เสิร์ฟไฟล์ WASM ด้วย MIME type `application/wasm` เอนจินโหลดจากเซิร์ฟเวอร์เดียวกันและใช้เธรดเดียว
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Project context](docs/AI_CONTEXT.md)
+- [Stockfish license and source](LICENSE)
