@@ -1,0 +1,16 @@
+Stockfish third-party notice
+
+ChessLens uses the Stockfish 17.1 Lite single-thread WebAssembly build
+from stockfish@17.1.0. Stockfish is distributed under GNU GPL version 3.
+The WebAssembly port credits Nathan Rugg, Chess.com, and the Stockfish
+developers and contributors. See public/stockfish/Copying.txt after the
+asset copy step for the full GPL text.
+
+Corresponding source for the bundled WebAssembly port:
+https://github.com/nmrugg/stockfish.js/tree/602fd7e1a571a2be71f242942db90483731f2a1f
+Upstream Stockfish source:
+https://github.com/official-stockfish/Stockfish/tree/sf_17.1
+
+When distributing the engine binaries, provide access to the matching
+corresponding source under GPL-3.0. This notice covers the third-party
+engine. No separate license for the original ChessLens code is declared.

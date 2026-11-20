@@ -1,0 +1,4 @@
+dist/
+public/stockfish/
+package-lock.json
+LICENSE
