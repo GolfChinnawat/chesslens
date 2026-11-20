@@ -1,0 +1,140 @@
+import { useEffect, useRef, useState } from 'react'
+import { analyzeGame } from '../../analysis/review'
+import { StockfishEngine } from '../../engine'
+import { reviewText as t } from '../../i18n/review-th'
+import { readReview, reviewKey, saveReview } from '../../store/review-cache'
+import type { GameReview, ImportedGame, ReviewDepth } from '../../types/review'
+import { Import } from './Import'
+import { ReviewBoard } from './ReviewBoard'
+
+export default function ReviewPage() {
+  const [review, setReview] = useState<GameReview | null>(readReview)
+  const [opening, setOpening] = useState(() => !readReview())
+  const [progress, setProgress] = useState<{
+    done: number
+    total: number
+    seconds: number
+  } | null>(null)
+  const [message, setMessage] = useState('')
+  const engine = useRef<StockfishEngine | null>(null)
+  const active = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    const stockfish = new StockfishEngine()
+    engine.current = stockfish
+    return () => {
+      active.current?.abort()
+      stockfish.destroy()
+    }
+  }, [])
+
+  async function start(game: ImportedGame, depth: ReviewDepth) {
+    const stockfish = engine.current
+    if (!stockfish || active.current) return
+    const controller = new AbortController()
+    active.current = controller
+    setMessage('')
+    setProgress({ done: 0, total: 0, seconds: 0 })
+    try {
+      const key = await reviewKey(game, depth)
+      controller.signal.throwIfAborted()
+      const cached = readReview(key)
+      const result =
+        cached ??
+        (await analyzeGame(
+          stockfish,
+          game,
+          depth,
+          controller.signal,
+          (done, total, seconds) => {
+            setProgress({ done, total, seconds })
+          },
+        ))
+      controller.signal.throwIfAborted()
+      setReview(result)
+      setOpening(false)
+      if (!saveReview(key, result)) setMessage(t.cacheFailed)
+    } catch {
+      setMessage(controller.signal.aborted ? t.cancelled : t.failed)
+    } finally {
+      active.current = null
+      setProgress(null)
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-9">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-slate-800 pb-5">
+        <div>
+          <p className="text-sm font-semibold tracking-wide text-cyan-200">
+            ChessLens
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{t.title}</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {!opening && (
+            <button
+              className="control"
+              onClick={() => {
+                setOpening(true)
+                setMessage('')
+              }}
+            >
+              {t.load}
+            </button>
+          )}
+          <a
+            href="./"
+            className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+          >
+            {t.play}
+          </a>
+        </div>
+      </header>
+      {opening ? (
+        <Import
+          busy={!!progress}
+          cached={review}
+          onRestore={() => {
+            setOpening(false)
+            setMessage('')
+          }}
+          onAnalyze={(game, depth) => void start(game, depth)}
+        />
+      ) : (
+        review && <ReviewBoard review={review} />
+      )}
+      {progress && (
+        <section className="panel mt-4 max-w-3xl">
+          <p role="status">
+            {progress.total
+              ? t.progress(progress.done, progress.total)
+              : t.analyze}
+          </p>
+          <progress
+            aria-label={t.analyze}
+            className="mt-2 w-full accent-cyan-300"
+            value={progress.total ? progress.done : undefined}
+            max={progress.total || 1}
+          />
+          {progress.seconds > 0 && (
+            <p className="mt-1 text-sm text-slate-300">
+              {t.eta(progress.seconds)}
+            </p>
+          )}
+          <button
+            className="control mt-2"
+            onClick={() => active.current?.abort()}
+          >
+            {t.cancel}
+          </button>
+        </section>
+      )}
+      {message && (
+        <p role="status" className="mt-3 text-sm text-amber-200">
+          {message}
+        </p>
+      )}
+    </main>
+  )
+}

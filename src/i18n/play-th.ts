@@ -1,5 +1,6 @@
 export const play = {
   title: 'เล่นกับ Stockfish',
+  review: 'รีวิวเกม',
   smoke: 'ทดสอบ Stockfish',
   white: 'ขาว',
   black: 'ดำ',

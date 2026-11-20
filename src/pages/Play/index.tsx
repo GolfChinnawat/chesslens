@@ -102,12 +102,20 @@ export function PlayPage() {
             {text.title}
           </h1>
         </div>
-        <a
-          href="?view=smoke"
-          className="text-sm text-cyan-200 underline-offset-4 hover:underline"
-        >
-          {text.smoke}
-        </a>
+        <nav className="flex flex-wrap gap-3">
+          <a
+            href="?view=review"
+            className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+          >
+            {text.review}
+          </a>
+          <a
+            href="?view=smoke"
+            className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+          >
+            {text.smoke}
+          </a>
+        </nav>
       </header>
       <div className="grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="min-w-0">

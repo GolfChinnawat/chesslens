@@ -46,59 +46,34 @@ The application workflow invokes the engine and passes its results into
 pure analysis functions, then commits the result to the store. The analysis
 module imports only data contracts and pure helpers.
 
-## Planned shared contracts
+## Game review
 
-```ts
-type MoveClass =
-  | 'brilliant'
-  | 'great'
-  | 'best'
-  | 'excellent'
-  | 'good'
-  | 'book'
-  | 'inaccuracy'
-  | 'mistake'
-  | 'miss'
-  | 'blunder'
+The review route is `?view=review`. It accepts pasted PGN, a PGN file, or
+the latest game from the play store. The importer separates games at
+top-level result markers and headers. chess.js validates the main line
+and reconstructs the starting FEN and each subsequent position.
 
-type Score = { kind: 'cp' | 'mate'; value: number }
+The pipeline passes the initial FEN and move history to Stockfish to
+preserve repetition context. It processes one position at a time with
+MultiPV 3 and depth 12, 16, 18, or 20. Checkmate and stalemate are assigned
+fixed evaluations. The position builder also treats insufficient
+material as a fixed draw. PGN variations and comments do not become
+analysis branches.
 
-type AnalysisLine = {
-  rank: number
-  depth: number
-  score: Score // White perspective. Positive values favor White.
-  moves: string[] // UCI principal variation, starting at the evaluated FEN.
-}
+`src/types/review.ts` defines `GameReview`, `ReviewPosition`,
+`PositionEval`, and `AnalysisLine`. Positions and evaluations align by
+ply, including ply 0. Each line preserves depth, a White-perspective
+centipawn or mate score, and paired UCI/SAN moves. A separate winner
+field distinguishes terminal mate scores of zero. The eval bar and
+graph use the same tanh scale for centipawns, with mates at the endpoints.
+Flipping the board moves the White segment to the opposite end of the
+bar. The graph remains in White's perspective.
 
-type PositionEval = {
-  fen: string
-  lines: AnalysisLine[]
-  bestMove: string | null // Null for a terminal position.
-}
-
-type MoveReview = {
-  ply: number
-  san: string
-  uci: string
-  before: PositionEval
-  after: PositionEval
-  classification: MoveClass
-  accuracy: number
-}
-
-type GameReview = {
-  pgn: string
-  startingFen: string
-  moves: MoveReview[]
-  accuracy: { white: number | null; black: number | null }
-  opening?: { eco: string; name: string }
-}
-```
-
-Normalize raw UCI scores using the side to move in the submitted position.
-For mate scores, the sign identifies which side can force mate and the
-absolute value is its distance in moves. Accuracy ranges from 0 to 100.
-A side with no scored moves has null game accuracy.
+The analysis worker cache handles repeat positions. Completed reviews
+are also saved in localStorage under a SHA-256 hash of canonical PGN
+and depth. The latest completed review is restored when opening the
+review route. Classification in Phase 3 can derive a move-level result
+from the evaluations before and after the corresponding ply.
 
 ## Engine API
 
@@ -108,8 +83,8 @@ A side with no scored moves has null game accuracy.
 - `analyze(fen, { depth, movetime, multiPV, moves, signal, cache })` searches
   the FEN and optional UCI move history. It resolves with `bestMove`,
   `ponder`, and the latest scored principal variation per rank. Raw UCI
-  scores use the side-to-move perspective. White-perspective normalization
-  applies to the planned review types below the module diagram.
+  scores use the side-to-move perspective. The review pipeline normalizes
+  scores to White’s perspective.
 - `stop()` cancels the latest request and waits for cleanup.
 - `destroy()` terminates the Worker and releases pending work.
 
@@ -153,6 +128,6 @@ represent relative difficulty and have no assigned Elo.
 | chess.js                            | Validate moves and parse FEN and PGN using one rules library.             |
 | react-chessboard                    | React 18-compatible board with drag-and-drop and click handling.          |
 | Stockfish 17.1 Lite                 | Small browser payload and no cross-origin isolation requirement.          |
-| Recharts                            | React components for the planned evaluation chart.                        |
+| Recharts                            | React components for the review evaluation chart.                         |
 | Vitest, ESLint, Prettier            | Run TypeScript tests and keep source checks and formatting repeatable.    |
 | Husky omitted                       | Keep the optional Git hook out of the initial scaffold.                   |

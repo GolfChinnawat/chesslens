@@ -29,7 +29,9 @@ export function parseInfo(line: string): UciInfo | null {
   return fields
 }
 
-export function parseBestmove(line: string) {
+export function parseBestmove(
+  line: string,
+): { bestMove: string | null; ponder: string | null } | null {
   const match = line.match(
     /^bestmove ([a-h][1-8][a-h][1-8][qrbn]?|\(none\)|0000)(?: ponder ([a-h][1-8][a-h][1-8][qrbn]?))?$/,
   )
