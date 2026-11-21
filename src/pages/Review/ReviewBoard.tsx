@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { Square } from 'chess.js'
 import {
@@ -13,7 +13,7 @@ import {
 } from 'recharts'
 import { evaluationScale, formatScore } from '../../analysis/score'
 import { reviewText as t } from '../../i18n/review-th'
-import type { GameReview, ReviewScore } from '../../types/review'
+import type { GameReview, PositionEval, ReviewScore } from '../../types/review'
 
 import { classifyReview, missedClasses } from '../../analysis/classify'
 import { classificationText as labels } from '../../i18n/classification-th'
@@ -26,18 +26,27 @@ export function ReviewBoard({ review }: { review: GameReview }) {
   const [ply, setPly] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [more, setMore] = useState(false)
-  const [retryPly, setRetryPly] = useState<number>()
+  const [mode, setMode] = useState<'after' | 'before' | 'retry'>('after')
+  const [trial, setTrial] = useState<PositionEval | null>()
+  const changePly = useCallback((index: number, before = false) => {
+    setPly(index)
+    setMode(before ? 'before' : 'after')
+    setTrial(undefined)
+  }, [])
   const [showBest, setShowBest] = useState(false)
   const classification = useMemo(() => classifyReview(review), [review])
   const grade = classification.grades[ply]
   const missed = !!grade && missedClasses.has(grade.kind)
-  const retrying = missed && retryPly === ply
+  const retrying = missed && mode === 'retry'
+  const beforeMove = missed && mode !== 'after'
+  const boardPly = beforeMove ? ply - 1 : ply
+  const triedMove = retrying && trial !== undefined
   const nextMiss = classification.grades.findIndex(
     (item, index) => index > ply && item && missedClasses.has(item.kind),
   )
   const last = review.positions.length - 1
   const current = review.positions[ply]
-  const evaluation = review.evaluations[ply]
+  const evaluation = triedMove ? trial : review.evaluations[boardPly]
 
   useEffect(() => {
     function navigate(event: KeyboardEvent) {
@@ -51,16 +60,16 @@ export function ReviewBoard({ review }: { review: GameReview }) {
         return
       switch (event.key) {
         case 'ArrowLeft':
-          setPly((value) => Math.max(0, value - 1))
+          changePly(Math.max(0, ply - 1))
           break
         case 'ArrowRight':
-          setPly((value) => Math.min(last, value + 1))
+          changePly(Math.min(last, ply + 1))
           break
         case 'Home':
-          setPly(0)
+          changePly(0)
           break
         case 'End':
-          setPly(last)
+          changePly(last)
           break
         default:
           return
@@ -69,10 +78,10 @@ export function ReviewBoard({ review }: { review: GameReview }) {
     }
     window.addEventListener('keydown', navigate)
     return () => window.removeEventListener('keydown', navigate)
-  }, [last])
+  }, [changePly, last, ply])
 
-  const arrows = evaluation.lines
-    .slice(0, more ? 3 : 1)
+  const arrows = (evaluation?.lines ?? [])
+    .slice(0, retrying && !triedMove ? (showBest ? 1 : 0) : more ? 3 : 1)
     .flatMap((line, index): [Square, Square, string][] => {
       const move = line.moves[0]?.uci
       return move
@@ -85,7 +94,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
           ]
         : []
     })
-  const move = current.move?.uci
+  const move = beforeMove ? undefined : current.move?.uci
   const target = move?.slice(2, 4)
   const file = target ? target.charCodeAt(0) - 97 : 0
   const rank = target ? Number(target[1]) - 1 : 0
@@ -123,12 +132,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-2">
-            <EvalBar
-              score={
-                retrying ? review.evaluations[ply - 1].score : evaluation.score
-              }
-              flipped={flipped}
-            />
+            <EvalBar score={evaluation?.score ?? null} flipped={flipped} />
             <section
               aria-label={t.board}
               className="relative min-w-0 overflow-hidden rounded-lg border border-slate-700"
@@ -139,13 +143,14 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                   review={review}
                   ply={ply}
                   flipped={flipped}
-                  showBest={showBest}
+                  arrows={arrows}
+                  onTrial={setTrial}
                 />
               ) : (
                 <>
                   <Chessboard
                     id="review-board"
-                    position={current.fen}
+                    position={review.positions[boardPly].fen}
                     boardOrientation={flipped ? 'black' : 'white'}
                     areArrowsAllowed={false}
                     arePiecesDraggable={false}
@@ -178,7 +183,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
               className="control"
               aria-label={t.first}
               disabled={ply === 0}
-              onClick={() => setPly(0)}
+              onClick={() => changePly(0)}
             >
               ⏮
             </button>
@@ -186,7 +191,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
               className="control"
               aria-label={t.previous}
               disabled={ply === 0}
-              onClick={() => setPly(ply - 1)}
+              onClick={() => changePly(ply - 1)}
             >
               ◀
             </button>
@@ -194,7 +199,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
               className="control"
               aria-label={t.next}
               disabled={ply === last}
-              onClick={() => setPly(ply + 1)}
+              onClick={() => changePly(ply + 1)}
             >
               ▶
             </button>
@@ -202,7 +207,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
               className="control"
               aria-label={t.last}
               disabled={ply === last}
-              onClick={() => setPly(last)}
+              onClick={() => changePly(last)}
             >
               ⏭
             </button>
@@ -212,17 +217,25 @@ export function ReviewBoard({ review }: { review: GameReview }) {
             <button
               className="control"
               disabled={nextMiss < 0}
-              onClick={() => {
-                setRetryPly(undefined)
-                setPly(nextMiss)
-              }}
+              onClick={() => changePly(nextMiss, true)}
             >
               {labels.next}
             </button>
+            {missed && !retrying && (
+              <button
+                className="control"
+                onClick={() => setMode(beforeMove ? 'after' : 'before')}
+              >
+                {beforeMove ? labels.viewAfter : labels.viewBefore}
+              </button>
+            )}
             {missed && (
               <button
                 className="control"
-                onClick={() => setRetryPly(retrying ? undefined : ply)}
+                onClick={() => {
+                  setTrial(undefined)
+                  setMode(retrying ? 'after' : 'retry')
+                }}
               >
                 {retrying ? labels.close : labels.retry}
               </button>
@@ -232,8 +245,15 @@ export function ReviewBoard({ review }: { review: GameReview }) {
             <div className="mt-3 flex items-start gap-2 text-sm">
               <GradeIcon kind={grade.kind} />
               <p>
+                <span className="block text-slate-300">
+                  {triedMove
+                    ? labels.trialPosition
+                    : beforeMove
+                      ? labels.beforePosition
+                      : labels.afterPosition}
+                </span>
                 {labels.move(current.move.san, labels.grade[grade.kind])}
-                {missed && grade.bestSan && (
+                {beforeMove && !triedMove && grade.bestSan && (
                   <span className="block text-slate-300">
                     {labels.recommend(grade.bestSan)}
                   </span>
@@ -266,7 +286,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                   margin={{ top: 8, right: 12, bottom: 2, left: 0 }}
                   onClick={(state) => {
                     if (typeof state?.activeTooltipIndex === 'number')
-                      setPly(state.activeTooltipIndex)
+                      changePly(state.activeTooltipIndex)
                   }}
                 >
                   <XAxis
@@ -280,7 +300,9 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                     tick={{ fill: '#cbd5e1', fontSize: 11 }}
                   />
                   <ReferenceLine y={0} stroke="#94a3b8" />
-                  <ReferenceLine x={ply} stroke="#f8fafc" />
+                  {!triedMove && (
+                    <ReferenceLine x={boardPly} stroke="#f8fafc" />
+                  )}
                   <Tooltip
                     content={({ active, payload }) =>
                       active && payload?.[0]?.payload ? (
@@ -299,27 +321,31 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                     baseValue={0}
                     isAnimationActive={false}
                   />
-                  <ReferenceDot
-                    x={ply}
-                    y={chart[ply].score ?? 0}
-                    r={4}
-                    fill="#f8fafc"
-                  />
+                  {!triedMove && (
+                    <ReferenceDot
+                      x={boardPly}
+                      y={chart[boardPly].score ?? 0}
+                      r={4}
+                      fill="#f8fafc"
+                    />
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </section>
           <section className="panel">
             <h3 className="font-semibold">{t.lines}</h3>
-            <label className="mt-2 flex items-center gap-2 text-sm text-slate-300">
-              <input
-                type="checkbox"
-                checked={more}
-                onChange={(event) => setMore(event.target.checked)}
-              />
-              {t.moreArrows}
-            </label>
-            {evaluation.lines.length ? (
+            {(!retrying || triedMove) && (
+              <label className="mt-2 flex items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={more}
+                  onChange={(event) => setMore(event.target.checked)}
+                />
+                {t.moreArrows}
+              </label>
+            )}
+            {evaluation?.lines.length ? (
               <ol className="mt-3 space-y-2 text-sm">
                 {evaluation.lines.map((line, index) => (
                   <li key={line.rank} className="flex gap-2">
@@ -339,7 +365,13 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                 ))}
               </ol>
             ) : (
-              <p className="mt-2 text-sm text-slate-300">{t.terminal}</p>
+              <p className="mt-2 text-sm text-slate-300">
+                {evaluation?.score
+                  ? t.terminal
+                  : retrying
+                    ? labels.evaluation
+                    : t.terminal}
+              </p>
             )}
           </section>
           <section className="panel">
@@ -349,7 +381,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                 <button
                   className="control aria-current:border-cyan-200"
                   aria-current={ply === 0}
-                  onClick={() => setPly(0)}
+                  onClick={() => changePly(0)}
                 >
                   {t.start}
                 </button>
@@ -361,7 +393,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                       <button
                         className="control inline-flex items-center gap-1 font-mono aria-current:bg-cyan-200 aria-current:text-slate-950"
                         aria-current={ply === index}
-                        onClick={() => setPly(index)}
+                        onClick={() => changePly(index)}
                       >
                         {classification.grades[index] && (
                           <GradeIcon kind={classification.grades[index].kind} />

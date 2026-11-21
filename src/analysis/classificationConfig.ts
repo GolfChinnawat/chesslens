@@ -6,7 +6,7 @@ export const classificationConfig = {
   miss: { winBefore: 70, loss: 10 },
   accuracy: { multiplier: 103.1668, decay: 0.04354, offset: 3.1669 },
   book: { maxPly: 16 },
-  great: { gap: 10, decided: 90, losing: 35, winning: 65 },
+  great: { gap: 10, decided: 90 },
   brilliant: { maxBefore: 80, minAfter: 50, minPly: 8, obviousGap: 25 },
   sacrifice: {
     minLoss: 2,

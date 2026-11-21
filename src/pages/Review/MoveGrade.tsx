@@ -79,13 +79,6 @@ export function GradeSummary({
               {accuracy(black.accuracy)}
             </td>
           </tr>
-          <tr>
-            <th scope="row" className="pb-2 text-left">
-              {t.rating}
-            </th>
-            <td className="text-center">{white.rating ?? '—'}</td>
-            <td className="text-center">{black.rating ?? '—'}</td>
-          </tr>
           {moveClasses.map((kind) => (
             <tr key={kind} className="border-t border-slate-700">
               <th scope="row" className="py-1 text-left font-normal">
@@ -103,7 +96,20 @@ export function GradeSummary({
           ))}
         </tbody>
       </table>
-      <p className="mt-2 text-xs text-slate-300">{t.ratingNote}</p>
+      <details className="mt-3 border-t border-slate-700 pt-2 text-sm">
+        <summary className="cursor-pointer text-slate-300">{t.rating}</summary>
+        <dl className="mt-2 grid grid-cols-2 gap-2">
+          <div>
+            <dt>{reviewText.white}</dt>
+            <dd>{white.rating ?? '—'}</dd>
+          </div>
+          <div>
+            <dt>{reviewText.black}</dt>
+            <dd>{black.rating ?? '—'}</dd>
+          </div>
+        </dl>
+        <p className="mt-2 text-xs text-slate-300">{t.ratingNote}</p>
+      </details>
     </section>
   )
 }

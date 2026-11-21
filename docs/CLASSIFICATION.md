@@ -45,8 +45,7 @@ this value with eight baseline observations at 1200 and rounds to the nearest 50
 ## Tactical upgrades
 
 **Great** upgrades the engine's top move if it beats the second line by
-at least 10 points or crosses a result bracket relative to it (35% and
-65% boundaries). Obvious recaptures and positions above 90% are excluded.
+at least 10 percentage points. Obvious recaptures and positions above 90% are excluded.
 
 **Brilliant** takes precedence over Great. It upgrades a Best or Excellent
 move after ply 8 when the loss is at most 2 points, pre-move win score is

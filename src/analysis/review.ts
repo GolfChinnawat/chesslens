@@ -1,13 +1,45 @@
-import { Chess } from 'chess.js'
+import { Chess, type Color } from 'chess.js'
 import type { StockfishEngine } from '../engine'
+import type { UciInfo } from '../engine/uci'
 import { normalizeScore } from './score'
 import { buildPositions } from './pgn'
 import type {
   AnalysisLine,
   GameReview,
   ImportedGame,
+  PositionEval,
   ReviewDepth,
 } from '../types/review'
+
+export function decodeEvaluation(
+  fen: string,
+  turn: Color,
+  entries: UciInfo[],
+): PositionEval {
+  const lines = entries.flatMap((line): AnalysisLine[] => {
+    if (!line.pv?.length || !line.score || line.depth === undefined) return []
+    const variation = new Chess(fen)
+    const moves: AnalysisLine['moves'] = []
+    for (const uci of line.pv) {
+      try {
+        moves.push({ uci, san: variation.move(uci).san })
+      } catch {
+        break
+      }
+    }
+    return moves.length
+      ? [
+          {
+            rank: line.multipv ?? 1,
+            depth: line.depth,
+            score: normalizeScore(line.score, turn),
+            moves,
+          },
+        ]
+      : []
+  })
+  return { lines, score: lines[0]?.score ?? null }
+}
 
 export async function analyzeGame(
   engine: Pick<StockfishEngine, 'analyze'>,
@@ -34,31 +66,14 @@ export async function analyzeGame(
         moves: [...history],
       })
       signal.throwIfAborted()
-      const lines = response.lines.flatMap((line): AnalysisLine[] => {
-        if (!line.pv?.length || !line.score || line.depth === undefined)
-          return []
-        const variation = new Chess(position.fen)
-        const moves: AnalysisLine['moves'] = []
-        for (const uci of line.pv) {
-          try {
-            moves.push({ uci, san: variation.move(uci).san })
-          } catch {
-            break
-          }
-        }
-        return moves.length
-          ? [
-              {
-                rank: line.multipv ?? 1,
-                depth: line.depth,
-                score: normalizeScore(line.score, position.turn),
-                moves,
-              },
-            ]
-          : []
-      })
-      if (!lines.length) throw new Error('Stockfish returned no scored lines')
-      evaluations.push({ lines, score: lines[0].score })
+      const evaluation = decodeEvaluation(
+        position.fen,
+        position.turn,
+        response.lines,
+      )
+      if (!evaluation.lines.length)
+        throw new Error('Stockfish returned no scored lines')
+      evaluations.push(evaluation)
     }
     const done = evaluations.length
     const seconds =

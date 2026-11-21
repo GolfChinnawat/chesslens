@@ -83,12 +83,7 @@ export function basicClass(
 }
 
 export function onlyGoodMove(best: number, alternative: number) {
-  const { gap, losing, winning } = config.great
-  return (
-    best - alternative >= gap ||
-    (alternative < losing && best >= losing) ||
-    (alternative <= winning && best > winning)
-  )
+  return best - alternative >= config.great.gap
 }
 
 export function estimateGameRating(sum: number, moves: number): number | null {

@@ -2,20 +2,22 @@ import { Chess, type Square } from 'chess.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { StockfishEngine } from '../../engine'
-import { formatScore, normalizeScore } from '../../analysis/score'
+import { formatScore } from '../../analysis/score'
+import { decodeEvaluation } from '../../analysis/review'
 import { buildPositions } from '../../analysis/pgn'
 import { classificationText as t } from '../../i18n/classification-th'
 import { reviewText } from '../../i18n/review-th'
-import type { GameReview } from '../../types/review'
+import type { GameReview, PositionEval } from '../../types/review'
 
 type Props = {
   review: GameReview
   ply: number
   flipped: boolean
-  showBest: boolean
+  arrows: [Square, Square, string][]
+  onTrial: (evaluation: PositionEval | null | undefined) => void
 }
 
-export function RetryMove({ review, ply, flipped, showBest }: Props) {
+export function RetryMove({ review, ply, flipped, arrows, onTrial }: Props) {
   const before = review.positions[ply - 1].fen
   const game = useMemo(() => new Chess(before), [before])
   const [fen, setFen] = useState(before)
@@ -48,11 +50,13 @@ export function RetryMove({ review, ply, flipped, showBest }: Props) {
     const copy = new Chess(before)
     const move = copy.move({ from, to, promotion: promote })
     setFen(copy.fen())
+    onTrial(null)
     active.current?.abort()
     const controller = new AbortController()
     active.current = controller
     const terminal = buildPositions(copy.pgn()).at(-1)?.terminal
     if (terminal) {
+      onTrial({ score: terminal, lines: [] })
       setStatus(t.retryScore(move.san, formatScore(terminal)))
       return true
     }
@@ -70,13 +74,15 @@ export function RetryMove({ review, ply, flipped, showBest }: Props) {
       })
       .then((result) => {
         if (controller.signal.aborted) return
-        const score = result.lines[0]?.score
+        const evaluation = decodeEvaluation(
+          copy.fen(),
+          copy.turn(),
+          result.lines,
+        )
+        onTrial(evaluation)
         setStatus(
-          score
-            ? t.retryScore(
-                move.san,
-                formatScore(normalizeScore(score, copy.turn())),
-              )
+          evaluation.score
+            ? t.retryScore(move.san, formatScore(evaluation.score))
             : reviewText.failed,
         )
       })
@@ -86,7 +92,6 @@ export function RetryMove({ review, ply, flipped, showBest }: Props) {
     return true
   }
 
-  const best = review.evaluations[ply - 1].lines[0]?.moves[0]?.uci
   const original = review.evaluations[ply].score
   return (
     <div className="space-y-2">
@@ -97,17 +102,7 @@ export function RetryMove({ review, ply, flipped, showBest }: Props) {
         areArrowsAllowed={false}
         arePiecesDraggable={fen === before}
         showPromotionDialog={false}
-        customArrows={
-          showBest && best && fen === before
-            ? [
-                [
-                  best.slice(0, 2) as Square,
-                  best.slice(2, 4) as Square,
-                  '#a3e635',
-                ],
-              ]
-            : []
-        }
+        customArrows={arrows}
         onPieceDrop={(from, to) => fen === before && tryMove(from, to)}
         customSquareStyles={
           selected
@@ -154,6 +149,7 @@ export function RetryMove({ review, ply, flipped, showBest }: Props) {
           onClick={() => {
             active.current?.abort()
             setFen(before)
+            onTrial(undefined)
             setStatus('')
           }}
         >

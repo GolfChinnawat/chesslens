@@ -51,10 +51,10 @@ import { buildPositions } from '../src/analysis/pgn'
 import type { GameReview } from '../src/types/review'
 
 describe('tactical grades', () => {
-  it('identifies an only-good move by gap or a result bracket', () => {
+  it('identifies an only-good move only when the gap meets the threshold', () => {
     expect(onlyGoodMove(60, 50)).toBe(true)
-    expect(onlyGoodMove(35, 34)).toBe(true)
-    expect(onlyGoodMove(66, 64)).toBe(true)
+    expect(onlyGoodMove(35, 34)).toBe(false)
+    expect(onlyGoodMove(66, 64)).toBe(false)
     expect(onlyGoodMove(58, 50)).toBe(false)
   })
 
