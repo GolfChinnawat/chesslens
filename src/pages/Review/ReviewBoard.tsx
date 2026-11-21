@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { Square } from 'chess.js'
 import {
@@ -15,12 +15,26 @@ import { evaluationScale, formatScore } from '../../analysis/score'
 import { reviewText as t } from '../../i18n/review-th'
 import type { GameReview, ReviewScore } from '../../types/review'
 
+import { classifyReview, missedClasses } from '../../analysis/classify'
+import { classificationText as labels } from '../../i18n/classification-th'
+import { GradeIcon, GradeSummary } from './MoveGrade'
+import { RetryMove } from './RetryMove'
+
 const colors = ['#a3e635', '#38bdf8', '#fb923c']
 
 export function ReviewBoard({ review }: { review: GameReview }) {
   const [ply, setPly] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [more, setMore] = useState(false)
+  const [retryPly, setRetryPly] = useState<number>()
+  const [showBest, setShowBest] = useState(false)
+  const classification = useMemo(() => classifyReview(review), [review])
+  const grade = classification.grades[ply]
+  const missed = !!grade && missedClasses.has(grade.kind)
+  const retrying = missed && retryPly === ply
+  const nextMiss = classification.grades.findIndex(
+    (item, index) => index > ply && item && missedClasses.has(item.kind),
+  )
   const last = review.positions.length - 1
   const current = review.positions[ply]
   const evaluation = review.evaluations[ply]
@@ -72,6 +86,13 @@ export function ReviewBoard({ review }: { review: GameReview }) {
         : []
     })
   const move = current.move?.uci
+  const target = move?.slice(2, 4)
+  const file = target ? target.charCodeAt(0) - 97 : 0
+  const rank = target ? Number(target[1]) - 1 : 0
+  const badgePosition = {
+    left: `${(flipped ? 7 - file : file) * 12.5 + 12.5}%`,
+    top: `${(flipped ? rank : 7 - rank) * 12.5}%`,
+  }
   const shade = { boxShadow: 'inset 0 0 0 100px #b9df4966' }
   const chart = review.evaluations.map(({ score }, index) => ({
     ply: index,
@@ -87,7 +108,14 @@ export function ReviewBoard({ review }: { review: GameReview }) {
           {t.players(White ?? t.unknown, Black ?? t.unknown)}
         </h2>
         <p className="text-sm text-slate-300">
-          {[Result, Date, ECO, `${t.depth} ${review.depth}`]
+          {[
+            Result,
+            Date,
+            classification.opening
+              ? `${classification.opening.eco} · ${classification.opening.name}`
+              : ECO,
+            `${t.depth} ${review.depth}`,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </p>
@@ -95,26 +123,54 @@ export function ReviewBoard({ review }: { review: GameReview }) {
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-2">
-            <EvalBar score={evaluation.score} flipped={flipped} />
+            <EvalBar
+              score={
+                retrying ? review.evaluations[ply - 1].score : evaluation.score
+              }
+              flipped={flipped}
+            />
             <section
               aria-label={t.board}
-              className="min-w-0 overflow-hidden rounded-lg border border-slate-700"
+              className="relative min-w-0 overflow-hidden rounded-lg border border-slate-700"
             >
-              <Chessboard
-                id="review-board"
-                position={current.fen}
-                boardOrientation={flipped ? 'black' : 'white'}
-                areArrowsAllowed={false}
-                arePiecesDraggable={false}
-                customArrows={arrows}
-                customLightSquareStyle={{ backgroundColor: '#dce8d8' }}
-                customDarkSquareStyle={{ backgroundColor: '#56817b' }}
-                customSquareStyles={
-                  move
-                    ? { [move.slice(0, 2)]: shade, [move.slice(2, 4)]: shade }
-                    : {}
-                }
-              />
+              {retrying ? (
+                <RetryMove
+                  key={ply}
+                  review={review}
+                  ply={ply}
+                  flipped={flipped}
+                  showBest={showBest}
+                />
+              ) : (
+                <>
+                  <Chessboard
+                    id="review-board"
+                    position={current.fen}
+                    boardOrientation={flipped ? 'black' : 'white'}
+                    areArrowsAllowed={false}
+                    arePiecesDraggable={false}
+                    customArrows={arrows}
+                    customLightSquareStyle={{ backgroundColor: '#dce8d8' }}
+                    customDarkSquareStyle={{ backgroundColor: '#56817b' }}
+                    customSquareStyles={
+                      move
+                        ? {
+                            [move.slice(0, 2)]: shade,
+                            [move.slice(2, 4)]: shade,
+                          }
+                        : {}
+                    }
+                  />
+                  {grade && target && (
+                    <div
+                      className="pointer-events-none absolute z-20 -translate-x-full p-0.5"
+                      style={badgePosition}
+                    >
+                      <GradeIcon kind={grade.kind} />
+                    </div>
+                  )}
+                </>
+              )}
             </section>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -153,6 +209,50 @@ export function ReviewBoard({ review }: { review: GameReview }) {
             <button className="control" onClick={() => setFlipped(!flipped)}>
               {t.flip}
             </button>
+            <button
+              className="control"
+              disabled={nextMiss < 0}
+              onClick={() => {
+                setRetryPly(undefined)
+                setPly(nextMiss)
+              }}
+            >
+              {labels.next}
+            </button>
+            {missed && (
+              <button
+                className="control"
+                onClick={() => setRetryPly(retrying ? undefined : ply)}
+              >
+                {retrying ? labels.close : labels.retry}
+              </button>
+            )}
+          </div>
+          {grade && current.move && (
+            <div className="mt-3 flex items-start gap-2 text-sm">
+              <GradeIcon kind={grade.kind} />
+              <p>
+                {labels.move(current.move.san, labels.grade[grade.kind])}
+                {missed && grade.bestSan && (
+                  <span className="block text-slate-300">
+                    {labels.recommend(grade.bestSan)}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+          {retrying && (
+            <label className="mt-2 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showBest}
+                onChange={(event) => setShowBest(event.target.checked)}
+              />
+              {labels.better}
+            </label>
+          )}
+          <div className="mt-4">
+            <GradeSummary data={classification} />
           </div>
         </div>
         <div className="min-w-0 space-y-4">
@@ -259,10 +359,13 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                   move && (
                     <li key={index}>
                       <button
-                        className="control font-mono aria-current:bg-cyan-200 aria-current:text-slate-950"
+                        className="control inline-flex items-center gap-1 font-mono aria-current:bg-cyan-200 aria-current:text-slate-950"
                         aria-current={ply === index}
                         onClick={() => setPly(index)}
                       >
+                        {classification.grades[index] && (
+                          <GradeIcon kind={classification.grades[index].kind} />
+                        )}
                         {move.number}
                         {move.color === 'w' ? '.' : '…'} {move.san}
                       </button>
