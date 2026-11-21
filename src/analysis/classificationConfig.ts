@@ -14,5 +14,13 @@ export const classificationConfig = {
     pieces: { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 },
   },
   // A display estimate on a familiar scale, based only on this game's accuracy.
-  rating: { floor: 400, ceiling: 2800, exponent: 1.8, minMoves: 5 },
+  rating: {
+    floor: 400,
+    ceiling: 2200,
+    exponent: 3,
+    minMoves: 8,
+    priorMoves: 8,
+    baseline: 1200,
+    rounding: 50,
+  },
 } as const

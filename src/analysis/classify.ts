@@ -91,12 +91,34 @@ export function onlyGoodMove(best: number, alternative: number) {
   )
 }
 
+export function estimateGameRating(sum: number, moves: number): number | null {
+  const { floor, ceiling, exponent, minMoves, priorMoves, baseline, rounding } =
+    config.rating
+  if (moves < minMoves) return null
+  const raw = floor + (ceiling - floor) * (sum / moves / 100) ** exponent
+  // Small samples stay closer to the baseline.
+  const estimate = (raw * moves + baseline * priorMoves) / (moves + priorMoves)
+  return Math.round(estimate / rounding) * rounding
+}
+
 export function classifyReview(review: GameReview) {
   const grades: (MoveGrade | undefined)[] = [undefined]
   let opening: Opening | undefined
   const totals = {
-    w: { sum: 0, moves: 0, counts: new Map<MoveClass, number>() },
-    b: { sum: 0, moves: 0, counts: new Map<MoveClass, number>() },
+    w: {
+      sum: 0,
+      moves: 0,
+      ratingSum: 0,
+      ratingMoves: 0,
+      counts: new Map<MoveClass, number>(),
+    },
+    b: {
+      sum: 0,
+      moves: 0,
+      ratingSum: 0,
+      ratingMoves: 0,
+      counts: new Map<MoveClass, number>(),
+    },
   }
   const standardStart = review.positions[0]?.fen === DEFAULT_POSITION
   for (let ply = 1; ply < review.positions.length; ply++) {
@@ -180,6 +202,13 @@ export function classifyReview(review: GameReview) {
     if (accuracy !== null) {
       total.sum += accuracy
       total.moves++
+      const decided =
+        (winBefore > config.decided.high && winAfter > config.decided.high) ||
+        (winBefore < config.decided.low && winAfter < config.decided.low)
+      if (kind !== 'book' && !decided) {
+        total.ratingSum += accuracy
+        total.ratingMoves++
+      }
     }
     grades.push({
       kind,
@@ -193,11 +222,10 @@ export function classifyReview(review: GameReview) {
   function summary(color: Color) {
     const { sum, moves, counts } = totals[color]
     const accuracy = moves ? sum / moves : null
-    const { floor, ceiling, exponent, minMoves } = config.rating
-    const rating =
-      accuracy !== null && moves >= minMoves
-        ? Math.round(floor + (ceiling - floor) * (accuracy / 100) ** exponent)
-        : null
+    const rating = estimateGameRating(
+      totals[color].ratingSum,
+      totals[color].ratingMoves,
+    )
     return { accuracy, rating, counts }
   }
   return { grades, opening, white: summary('w'), black: summary('b') }

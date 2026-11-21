@@ -122,3 +122,10 @@ describe('tactical grades', () => {
     expect(result.black.accuracy).toBeCloseTo(100)
   })
 })
+
+it('needs enough eligible moves and avoids inflated ratings on short perfect samples', async () => {
+  const { estimateGameRating } = await import('../src/analysis/classify')
+  expect(estimateGameRating(700, 7)).toBeNull()
+  expect(estimateGameRating(800, 8)).toBe(1700)
+  expect(estimateGameRating(1080, 12)).toBe(1500)
+})

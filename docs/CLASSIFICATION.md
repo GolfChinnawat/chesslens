@@ -19,9 +19,11 @@ accuracy = clamp(103.1668 × exp(-0.04354 × loss) - 3.1669, 0, 100)
 ```
 
 Player accuracy is the arithmetic mean of their non-forced move accuracies,
-including Book moves. The game rating is a display estimate computed from
-at least five graded moves: `400 + (2800 - 400) × (accuracy / 100)^1.8`,
-rounded to the nearest integer. It uses no opponent rating or match history.
+including Book moves. Game rating uses a separate sample that excludes Book,
+Forced, and positions that stay in the same already-decided band. Each side
+needs at least eight eligible moves. For that sample, the raw estimate is
+`400 + 1800 × (average accuracy / 100)^3`. The displayed estimate blends
+this value with eight baseline observations at 1200 and rounds to the nearest 50. This display heuristic uses no opponent rating or match history.
 
 ## Class rules
 
