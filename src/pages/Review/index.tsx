@@ -91,6 +91,11 @@ export default function ReviewPage() {
               {t.load}
             </button>
           )}
+          {import.meta.env.VITE_SUPABASE_URL && (
+            <a href="?view=account" className="text-sm text-cyan-200">
+              บัญชีและคลังเกม
+            </a>
+          )}
           <a
             href="./"
             className="text-sm text-cyan-200 underline-offset-4 hover:underline"

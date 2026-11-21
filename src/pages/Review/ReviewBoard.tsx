@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { useReviewSound } from './useReviewSound'
 import { PlanBoard } from './PlanBoard'
 import { DeepAnalysis } from './DeepAnalysis'
@@ -25,6 +26,12 @@ import { classifyReview, missedClasses } from '../../analysis/classify'
 import { classificationText as labels } from '../../i18n/classification-th'
 import { GradeIcon, GradeSummary } from './MoveGrade'
 import { RetryMove } from './RetryMove'
+
+const CloudSave = lazy(() =>
+  import('../Account/CloudSave').then(({ CloudSave }) => ({
+    default: CloudSave,
+  })),
+)
 
 const colors = ['#a3e635', '#38bdf8', '#fb923c', '#c4b5fd', '#f9a8d4']
 
@@ -214,6 +221,11 @@ export function ReviewBoard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {!analyzing && import.meta.env.VITE_SUPABASE_URL && (
+            <Suspense>
+              <CloudSave review={review} />
+            </Suspense>
+          )}
           <button
             className="control"
             disabled={analyzing}

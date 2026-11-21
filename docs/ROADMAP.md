@@ -9,3 +9,6 @@
 - [ ] Phase 6 — Advanced features such as blunder training, online play, and Thai explanations.
 
 Phase 4 รุ่นแรกส่งมอบการนำเข้าด้วย username การสรุปเกม การฝึก และเครื่องมือวิเคราะห์เพิ่มแบบจำกัดเวลา รายการที่เหลือประกอบด้วยสถิติ Opening Explorer, ธีมและชุดหมาก, เสียง, ความเร็วแอนิเมชัน, ส่งออกกราฟ และตรวจเกณฑ์ Lighthouse
+
+Phase 5 รุ่นแรกมีโค้ดสำหรับบัญชี คลังเกม สถิติ และฝึกซ้ำ โดยใช้ Supabase
+ยังต้องตั้งค่าโปรเจกต์จริงและทดสอบ OAuth/email ก่อนเปิดใช้งานบนเว็บ

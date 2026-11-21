@@ -51,3 +51,16 @@ export function saveReview(key: string, review: GameReview) {
     return false
   }
 }
+
+export function localReviews() {
+  try {
+    return Object.keys(localStorage)
+      .filter((key) => key.startsWith(prefix) && key !== latest)
+      .flatMap((key) => {
+        const review = readReview(key)
+        return review ? [review] : []
+      })
+  } catch {
+    return []
+  }
+}

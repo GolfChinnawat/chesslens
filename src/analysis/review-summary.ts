@@ -11,6 +11,11 @@ export function reviewSummary(
     middle: { w: [] as number[], b: [] as number[] },
     end: { w: [] as number[], b: [] as number[] },
   }
+  const gradedMoves: {
+    phase: keyof typeof phases
+    grade: MoveGrade
+    color: 'w' | 'b'
+  }[] = []
   let endgame = false
   const swings = grades
     .flatMap((grade, ply) => {
@@ -23,11 +28,13 @@ export function reviewSummary(
         .filter((piece) => piece && piece.type !== 'p' && piece.type !== 'k')
       endgame ||= pieces.length <= 6
       const phase = endgame ? 'end' : ply <= 20 ? 'opening' : 'middle'
-      if (grade.accuracy !== null)
+      if (grade.accuracy !== null) {
         phases[phase][move.color].push(grade.accuracy)
+        gradedMoves.push({ phase, grade, color: move.color })
+      }
       return grade.loss > 0 ? [{ ply, move, swing: grade.loss }] : []
     })
     .sort((a, b) => b.swing - a.swing)
     .slice(0, 3)
-  return { phases, swings }
+  return { phases, swings, gradedMoves }
 }

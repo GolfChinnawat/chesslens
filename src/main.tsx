@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { PlayPage, SmokeTestPage } from './pages'
 import './styles.css'
 
+const AccountPage = lazy(() => import('./pages/Account'))
 const ReviewPage = lazy(() => import('./pages/Review'))
 const view = new URLSearchParams(window.location.search).get('view')
 
@@ -12,7 +13,9 @@ if (!root) throw new Error('Missing application root')
 createRoot(root).render(
   <StrictMode>
     <Suspense>
-      {view === 'review' ? (
+      {view === 'account' ? (
+        <AccountPage />
+      ) : view === 'review' ? (
         <ReviewPage />
       ) : view === 'smoke' ? (
         <SmokeTestPage />
