@@ -1,9 +1,18 @@
+import { createPortal } from 'react-dom'
 import { Chess, type Square } from 'chess.js'
 import { useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { classificationText as t } from '../../i18n/classification-th'
 
-export function PlanBoard({ fen, flipped }: { fen: string; flipped: boolean }) {
+export function PlanBoard({
+  fen,
+  flipped,
+  controls,
+}: {
+  fen: string
+  flipped: boolean
+  controls: HTMLDivElement | null
+}) {
   const [positions, setPositions] = useState([{ fen, san: '' }])
   const [selected, setSelected] = useState<Square>()
   const [promotion, setPromotion] = useState<{ from: Square; to: Square }>()
@@ -81,59 +90,66 @@ export function PlanBoard({ fen, flipped }: { fen: string; flipped: boolean }) {
             : {}),
         }}
       />
-      <div className="space-y-2 px-3 pb-3">
-        <p className="text-sm text-slate-300">{t.planHelp}</p>
-        {promotion && (
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label={t.promote}
-          >
-            {(['q', 'r', 'b', 'n'] as const).map((piece) => (
-              <button
-                key={piece}
-                className="control uppercase"
-                onClick={() => play(promotion.from, promotion.to, piece)}
+      {controls &&
+        createPortal(
+          <div className="space-y-2 px-3 pb-3">
+            <p className="text-sm text-slate-300">{t.planHelp}</p>
+            {promotion && (
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label={t.promote}
               >
-                {piece}
+                {(['q', 'r', 'b', 'n'] as const).map((piece) => (
+                  <button
+                    key={piece}
+                    className="control uppercase"
+                    onClick={() => play(promotion.from, promotion.to, piece)}
+                  >
+                    {piece}
+                  </button>
+                ))}
+                <button
+                  className="control"
+                  onClick={() => setPromotion(undefined)}
+                >
+                  {t.planCancel}
+                </button>
+              </div>
+            )}
+            <p role="status" className="break-words font-mono text-sm">
+              {positions.length > 1
+                ? positions
+                    .slice(1)
+                    .map(({ san }) => san)
+                    .join(' ')
+                : t.planEmpty}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="control"
+                disabled={positions.length < 2}
+                onClick={() => rewind(false)}
+              >
+                {t.planUndo}
               </button>
-            ))}
-            <button className="control" onClick={() => setPromotion(undefined)}>
-              {t.planCancel}
-            </button>
-          </div>
+              <button
+                className="control"
+                disabled={positions.length < 2}
+                onClick={() => rewind(true)}
+              >
+                {t.planReset}
+              </button>
+              <button
+                className="control"
+                onClick={() => setDrawing((version) => version + 1)}
+              >
+                {t.planClear}
+              </button>
+            </div>
+          </div>,
+          controls,
         )}
-        <p role="status" className="break-words font-mono text-sm">
-          {positions.length > 1
-            ? positions
-                .slice(1)
-                .map(({ san }) => san)
-                .join(' ')
-            : t.planEmpty}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            className="control"
-            disabled={positions.length < 2}
-            onClick={() => rewind(false)}
-          >
-            {t.planUndo}
-          </button>
-          <button
-            className="control"
-            disabled={positions.length < 2}
-            onClick={() => rewind(true)}
-          >
-            {t.planReset}
-          </button>
-          <button
-            className="control"
-            onClick={() => setDrawing((version) => version + 1)}
-          >
-            {t.planClear}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

@@ -37,7 +37,7 @@ export function ReviewBoard({
 }) {
   const layout = useRef<HTMLDivElement>(null)
   const boardRow = useRef<HTMLDivElement>(null)
-  const boardFooter = useRef<HTMLDivElement>(null)
+  const [modeControls, setModeControls] = useState<HTMLDivElement | null>(null)
   const [fit, setFit] = useState<{ board: number; sidebar: number }>()
   const [planning, setPlanning] = useState(false)
   const [practice, setPractice] = useState(false)
@@ -77,17 +77,17 @@ export function ReviewBoard({
   useEffect(() => {
     const container = layout.current
     const row = boardRow.current
-    const footer = boardFooter.current
-    if (practice || !container || !row || !footer) return
+    if (practice || !container || !row) return
 
     function measure() {
-      if (!container || !row || !footer) return
+      if (!container || !row) return
       const viewport = window.innerHeight
       const sidebar = Math.floor(
-        viewport - container.getBoundingClientRect().top - 16,
+        viewport - container.getBoundingClientRect().top - window.scrollY - 16,
       )
       const board = Math.floor(
-        viewport - row.getBoundingClientRect().top - footer.offsetHeight - 16,
+        // Reserve space for the player label and navigation without measuring changing move details.
+        viewport - row.getBoundingClientRect().top - window.scrollY - 156,
       )
       const next =
         window.matchMedia('(min-width: 1024px)').matches && board >= 230
@@ -100,16 +100,12 @@ export function ReviewBoard({
       )
     }
 
-    const resize = new ResizeObserver(measure)
-    resize.observe(footer)
-    resize.observe(container.parentElement ?? container)
     window.addEventListener('resize', measure)
     measure()
     return () => {
-      resize.disconnect()
       window.removeEventListener('resize', measure)
     }
-  }, [practice])
+  }, [practice, analyzing])
 
   useEffect(() => {
     if (!auto || practice || ply >= last) return
@@ -200,7 +196,7 @@ export function ReviewBoard({
     )
 
   return (
-    <article className="space-y-4">
+    <article className="review-layout space-y-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="break-words text-sm font-medium text-slate-100">
@@ -247,15 +243,17 @@ export function ReviewBoard({
           </button>
           <button
             type="button"
-            className="control"
+            className="control min-w-20"
             aria-pressed={sound.enabled}
             onClick={sound.toggle}
           >
             {sound.enabled ? t.soundOn : t.soundOff}
           </button>
-          <details className="control">
+          <details className="control relative">
             <summary className="cursor-pointer">คีย์ลัด</summary>
-            <p>← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม</p>
+            <p className="absolute right-0 top-full z-30 mt-1 w-56 rounded-md border border-slate-600 bg-slate-900 p-3 shadow-lg">
+              ← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม
+            </p>
           </details>
         </div>
       </header>
@@ -284,12 +282,14 @@ export function ReviewBoard({
               {planning ? (
                 <PlanBoard
                   key={boardPly}
+                  controls={modeControls}
                   fen={review.positions[boardPly].fen}
                   flipped={flipped}
                 />
               ) : retrying ? (
                 <RetryMove
                   key={ply}
+                  controls={modeControls}
                   review={review}
                   ply={ply}
                   flipped={flipped}
@@ -328,7 +328,7 @@ export function ReviewBoard({
               )}
             </section>
           </div>
-          <div ref={boardFooter}>
+          <div>
             <PlayerStrip
               color={flipped ? 'b' : 'w'}
               name={flipped ? Black : White}
@@ -415,6 +415,7 @@ export function ReviewBoard({
                 </button>
               )}
             </div>
+            <div ref={setModeControls} className="empty:hidden mt-3" />
             {!planning && grade && current.move && (
               <div className="mt-3 flex items-start gap-2 text-sm">
                 <GradeIcon kind={grade.kind} />
@@ -453,8 +454,8 @@ export function ReviewBoard({
           </div>
         </div>
         <aside
-          style={fit ? { maxHeight: fit.sidebar } : undefined}
-          className={`min-w-0 space-y-3 ${fit ? 'overflow-y-auto overscroll-contain pr-2' : ''}`}
+          style={fit ? { height: fit.sidebar } : undefined}
+          className={`min-w-0 space-y-3 ${fit ? 'overflow-y-auto overscroll-contain [scrollbar-gutter:stable] pr-2' : ''}`}
           aria-label={labels.summary}
           tabIndex={fit ? 0 : undefined}
         >

@@ -23,3 +23,9 @@
     @apply min-h-10 rounded-md border border-slate-600 bg-slate-800 px-2 py-2 text-sm leading-tight hover:border-cyan-200 disabled:opacity-45;
   }
 }
+
+@media (min-width: 1024px) {
+  html:has(.review-layout) {
+    scrollbar-gutter: stable;
+  }
+}

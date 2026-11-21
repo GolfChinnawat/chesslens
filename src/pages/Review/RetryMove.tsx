@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { Chess, type Square } from 'chess.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
@@ -13,11 +14,19 @@ type Props = {
   review: GameReview
   ply: number
   flipped: boolean
+  controls: HTMLDivElement | null
   arrows: [Square, Square, string][]
   onTrial: (evaluation: PositionEval | null | undefined) => void
 }
 
-export function RetryMove({ review, ply, flipped, arrows, onTrial }: Props) {
+export function RetryMove({
+  review,
+  ply,
+  flipped,
+  arrows,
+  onTrial,
+  controls,
+}: Props) {
   const before = review.positions[ply - 1].fen
   const game = useMemo(() => new Chess(before), [before])
   const [fen, setFen] = useState(before)
@@ -120,42 +129,48 @@ export function RetryMove({ review, ply, flipped, arrows, onTrial }: Props) {
           )
         }}
       />
-      <p className="text-sm text-slate-300">
-        {original && t.original(formatScore(original))}
-      </p>
-      <p role="status" className="text-sm">
-        {status || t.choose}
-      </p>
-      {promotion && (
-        <div
-          role="group"
-          aria-label={t.promote}
-          className="flex flex-wrap gap-2"
-        >
-          {(['q', 'r', 'b', 'n'] as const).map((piece) => (
-            <button
-              className="control uppercase"
-              key={piece}
-              onClick={() => tryMove(promotion.from, promotion.to, piece)}
-            >
-              {piece}
-            </button>
-          ))}
-        </div>
-      )}
-      {fen !== before && (
-        <button
-          className="control"
-          onClick={() => {
-            active.current?.abort()
-            setFen(before)
-            onTrial(undefined)
-            setStatus('')
-          }}
-        >
-          {t.retry}
-        </button>
-      )}
+      {controls &&
+        createPortal(
+          <div className="space-y-2">
+            <p className="text-sm text-slate-300">
+              {original && t.original(formatScore(original))}
+            </p>
+            <p role="status" className="text-sm">
+              {status || t.choose}
+            </p>
+            {promotion && (
+              <div
+                role="group"
+                aria-label={t.promote}
+                className="flex flex-wrap gap-2"
+              >
+                {(['q', 'r', 'b', 'n'] as const).map((piece) => (
+                  <button
+                    className="control uppercase"
+                    key={piece}
+                    onClick={() => tryMove(promotion.from, promotion.to, piece)}
+                  >
+                    {piece}
+                  </button>
+                ))}
+              </div>
+            )}
+            {fen !== before && (
+              <button
+                className="control"
+                onClick={() => {
+                  active.current?.abort()
+                  setFen(before)
+                  onTrial(undefined)
+                  setStatus('')
+                }}
+              >
+                {t.retry}
+              </button>
+            )}
+          </div>,
+          controls,
+        )}
     </div>
   )
 }
