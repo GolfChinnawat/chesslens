@@ -4,8 +4,14 @@ const prefix = 'chesslens.review.v1.'
 const latest = prefix + 'latest'
 const limit = 6
 
-export async function reviewKey(game: ImportedGame, depth: ReviewDepth) {
-  const data = new TextEncoder().encode(JSON.stringify([game.pgn, depth]))
+export async function reviewKey(
+  game: ImportedGame,
+  depth: ReviewDepth,
+  multiPV = 3,
+) {
+  const data = new TextEncoder().encode(
+    JSON.stringify([game.pgn, depth, ...(multiPV === 3 ? [] : [multiPV])]),
+  )
   const hash = await crypto.subtle.digest('SHA-256', data)
   return (
     prefix +

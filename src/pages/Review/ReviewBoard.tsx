@@ -1,3 +1,7 @@
+import { DeepAnalysis } from './DeepAnalysis'
+import { Practice } from './Practice'
+import { reviewSummary } from '../../analysis/review-summary'
+import { findOpening } from '../../analysis/openings'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { Square } from 'chess.js'
@@ -20,9 +24,17 @@ import { classificationText as labels } from '../../i18n/classification-th'
 import { GradeIcon, GradeSummary } from './MoveGrade'
 import { RetryMove } from './RetryMove'
 
-const colors = ['#a3e635', '#38bdf8', '#fb923c']
+const colors = ['#a3e635', '#38bdf8', '#fb923c', '#c4b5fd', '#f9a8d4']
 
-export function ReviewBoard({ review }: { review: GameReview }) {
+export function ReviewBoard({
+  review,
+  analyzing = false,
+}: {
+  review: GameReview
+  analyzing?: boolean
+}) {
+  const [practice, setPractice] = useState(false)
+  const [auto, setAuto] = useState(false)
   const [ply, setPly] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [more, setMore] = useState(false)
@@ -35,6 +47,10 @@ export function ReviewBoard({ review }: { review: GameReview }) {
   }, [])
   const [showBest, setShowBest] = useState(false)
   const classification = useMemo(() => classifyReview(review), [review])
+  const summary = useMemo(
+    () => reviewSummary(review, classification.grades),
+    [review, classification.grades],
+  )
   const grade = classification.grades[ply]
   const missed = !!grade && missedClasses.has(grade.kind)
   const retrying = missed && mode === 'retry'
@@ -49,6 +65,13 @@ export function ReviewBoard({ review }: { review: GameReview }) {
   const evaluation = triedMove ? trial : review.evaluations[boardPly]
 
   useEffect(() => {
+    if (!auto || practice || ply >= last) return
+    const timer = setTimeout(() => changePly(ply + 1), 1100)
+    return () => clearTimeout(timer)
+  }, [auto, practice, ply, last, changePly])
+
+  useEffect(() => {
+    if (practice) return
     function navigate(event: KeyboardEvent) {
       if (
         event.altKey ||
@@ -78,10 +101,10 @@ export function ReviewBoard({ review }: { review: GameReview }) {
     }
     window.addEventListener('keydown', navigate)
     return () => window.removeEventListener('keydown', navigate)
-  }, [changePly, last, ply])
+  }, [changePly, last, ply, practice])
 
   const arrows = (evaluation?.lines ?? [])
-    .slice(0, retrying && !triedMove ? (showBest ? 1 : 0) : more ? 3 : 1)
+    .slice(0, retrying && !triedMove ? (showBest ? 1 : 0) : more ? 5 : 1)
     .flatMap((line, index): [Square, Square, string][] => {
       const move = line.moves[0]?.uci
       return move
@@ -110,6 +133,25 @@ export function ReviewBoard({ review }: { review: GameReview }) {
   }))
   const { White, Black, Result, Date, ECO } = review.game.headers
 
+  const opening = useMemo(() => {
+    for (let index = boardPly; index > 0; index--) {
+      const found = findOpening(review.positions[index].fen)
+      if (found) return found
+    }
+  }, [boardPly, review.positions])
+  const average = (values: number[]) =>
+    values.length
+      ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) + '%'
+      : '—'
+  if (practice)
+    return (
+      <Practice
+        review={review}
+        grades={classification.grades}
+        onClose={() => setPractice(false)}
+      />
+    )
+
   return (
     <article className="space-y-4">
       <header>
@@ -120,14 +162,45 @@ export function ReviewBoard({ review }: { review: GameReview }) {
           {[
             Result,
             Date,
-            classification.opening
-              ? `${classification.opening.eco} · ${classification.opening.name}`
-              : ECO,
+            opening ? `${opening.eco} · ${opening.name}` : ECO,
             `${t.depth} ${review.depth}`,
           ]
             .filter(Boolean)
             .join(' · ')}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            className="control"
+            disabled={analyzing}
+            onClick={() => {
+              setAuto(false)
+              setPractice(true)
+            }}
+          >
+            ฝึกจากตาพลาด
+          </button>
+          <button
+            className="control"
+            onClick={() => {
+              const url = URL.createObjectURL(
+                new Blob([review.game.pgn], {
+                  type: 'application/x-chess-pgn',
+                }),
+              )
+              const link = document.createElement('a')
+              link.href = url
+              link.download = 'chesslens-review.pgn'
+              link.click()
+              setTimeout(() => URL.revokeObjectURL(url), 1000)
+            }}
+          >
+            ดาวน์โหลด PGN
+          </button>
+          <details className="control">
+            <summary className="cursor-pointer">คีย์ลัด</summary>
+            <p>← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม</p>
+          </details>
+        </div>
       </header>
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <div className="min-w-0">
@@ -221,6 +294,13 @@ export function ReviewBoard({ review }: { review: GameReview }) {
             >
               {labels.next}
             </button>
+            <button
+              className="control"
+              disabled={ply === last || retrying}
+              onClick={() => setAuto(!auto)}
+            >
+              {auto && ply < last ? 'หยุดเล่นอัตโนมัติ' : 'เล่นย้อนหลังอัตโนมัติ'}
+            </button>
             {missed && !retrying && (
               <button
                 className="control"
@@ -234,6 +314,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                 className="control"
                 onClick={() => {
                   setTrial(undefined)
+                  setAuto(false)
                   setMode(retrying ? 'after' : 'retry')
                 }}
               >
@@ -272,6 +353,60 @@ export function ReviewBoard({ review }: { review: GameReview }) {
             </label>
           )}
           <div className="mt-4">
+            <section className="panel mb-4 space-y-2">
+              <h3 className="font-semibold">จุดเปลี่ยนของเกม</h3>
+              {summary.swings.length ? (
+                <ol className="flex flex-wrap gap-2">
+                  {summary.swings.map(({ ply, move, swing }) => (
+                    <li key={ply}>
+                      <button
+                        className="control"
+                        onClick={() => changePly(ply, true)}
+                      >
+                        {move.number}
+                        {move.color === 'w' ? '.' : '…'} {move.san} · −
+                        {swing.toFixed(1)} จุด
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-sm">ยังไม่มีคะแนนประเมินที่ลดลง</p>
+              )}
+              <table className="w-full text-sm">
+                <caption className="text-left font-semibold">
+                  ความแม่นยำแยกช่วงเกม
+                </caption>
+                <thead>
+                  <tr>
+                    <td />
+                    <th scope="col">ขาว</th>
+                    <th scope="col">ดำ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(
+                    [
+                      ['opening', 'เปิดเกม'],
+                      ['middle', 'กลางเกม'],
+                      ['end', 'ท้ายเกม'],
+                    ] as const
+                  ).map(([phase, label]) => (
+                    <tr key={phase}>
+                      <th scope="row" className="text-left">
+                        {label}
+                      </th>
+                      <td className="text-center">
+                        {average(summary.phases[phase].w)}
+                      </td>
+                      <td className="text-center">
+                        {average(summary.phases[phase].b)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
             <GradeSummary data={classification} />
           </div>
         </div>
@@ -342,7 +477,7 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                   checked={more}
                   onChange={(event) => setMore(event.target.checked)}
                 />
-                {t.moreArrows}
+                แนวเดินเพิ่มเติม
               </label>
             )}
             {evaluation?.lines.length ? (
@@ -373,6 +508,11 @@ export function ReviewBoard({ review }: { review: GameReview }) {
                     : t.terminal}
               </p>
             )}
+            {!analyzing &&
+              !retrying &&
+              !review.positions[boardPly].terminal && (
+                <DeepAnalysis key={boardPly} review={review} ply={boardPly} />
+              )}
           </section>
           <section className="panel">
             <h3 className="mb-2 font-semibold">{t.moves}</h3>

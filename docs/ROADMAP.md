@@ -7,3 +7,5 @@
 - [ ] Phase 4 — Opening names, richer review feedback, and game imports.
 - [ ] Phase 5 — Accounts, saved games, and statistics backed by Node.js and PostgreSQL.
 - [ ] Phase 6 — Advanced features such as blunder training, online play, and Thai explanations.
+
+Phase 4 รุ่นแรกส่งมอบการนำเข้าด้วย username การสรุปเกม การฝึก และเครื่องมือวิเคราะห์เพิ่มแบบจำกัดเวลา รายการที่เหลือประกอบด้วยสถิติ Opening Explorer, ธีมและชุดหมาก, เสียง, ความเร็วแอนิเมชัน, ส่งออกกราฟ และตรวจเกณฑ์ Lighthouse

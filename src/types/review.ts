@@ -8,8 +8,12 @@ export type ReviewScore = UciScore & { winner?: Color }
 
 export type ImportedGame = {
   pgn: string
+  username?: string
   headers: Partial<
-    Record<'White' | 'Black' | 'Result' | 'Date' | 'ECO', string>
+    Record<
+      'White' | 'Black' | 'Result' | 'Date' | 'ECO' | 'TimeControl' | 'Opening',
+      string
+    >
   >
 }
 

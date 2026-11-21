@@ -9,6 +9,7 @@ import { ReviewBoard } from './ReviewBoard'
 
 export default function ReviewPage() {
   const [review, setReview] = useState<GameReview | null>(readReview)
+  const [partial, setPartial] = useState<GameReview | null>(null)
   const [opening, setOpening] = useState(() => !readReview())
   const [progress, setProgress] = useState<{
     done: number
@@ -28,7 +29,11 @@ export default function ReviewPage() {
     }
   }, [])
 
-  async function start(game: ImportedGame, depth: ReviewDepth) {
+  async function start(
+    game: ImportedGame,
+    depth: ReviewDepth,
+    multiPV: number,
+  ) {
     const stockfish = engine.current
     if (!stockfish || active.current) return
     const controller = new AbortController()
@@ -36,7 +41,7 @@ export default function ReviewPage() {
     setMessage('')
     setProgress({ done: 0, total: 0, seconds: 0 })
     try {
-      const key = await reviewKey(game, depth)
+      const key = await reviewKey(game, depth, multiPV)
       controller.signal.throwIfAborted()
       const cached = readReview(key)
       const result =
@@ -49,16 +54,19 @@ export default function ReviewPage() {
           (done, total, seconds) => {
             setProgress({ done, total, seconds })
           },
+          { multiPV, onPartial: setPartial },
         ))
       controller.signal.throwIfAborted()
-      setReview(result)
+      const finished = { ...result, game }
+      setReview(finished)
       setOpening(false)
-      if (!saveReview(key, result)) setMessage(t.cacheFailed)
+      if (!saveReview(key, finished)) setMessage(t.cacheFailed)
     } catch {
       setMessage(controller.signal.aborted ? t.cancelled : t.failed)
     } finally {
       active.current = null
       setProgress(null)
+      setPartial(null)
     }
   }
 
@@ -91,7 +99,7 @@ export default function ReviewPage() {
           </a>
         </div>
       </header>
-      {opening ? (
+      {opening && !partial && (
         <Import
           busy={!!progress}
           cached={review}
@@ -99,10 +107,8 @@ export default function ReviewPage() {
             setOpening(false)
             setMessage('')
           }}
-          onAnalyze={(game, depth) => void start(game, depth)}
+          onAnalyze={(game, depth, multiPV) => void start(game, depth, multiPV)}
         />
-      ) : (
-        review && <ReviewBoard review={review} />
       )}
       {progress && (
         <section className="panel mt-4 max-w-3xl">
@@ -129,6 +135,15 @@ export default function ReviewPage() {
             {t.cancel}
           </button>
         </section>
+      )}
+      {(partial || (!opening && review)) && (
+        <div className="mt-4">
+          <ReviewBoard
+            key={(partial ?? review)?.game.pgn}
+            review={(partial ?? review)!}
+            analyzing={!!partial}
+          />
+        </div>
       )}
       {message && (
         <p role="status" className="mt-3 text-sm text-amber-200">

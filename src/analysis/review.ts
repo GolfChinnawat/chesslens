@@ -47,6 +47,7 @@ export async function analyzeGame(
   depth: ReviewDepth,
   signal: AbortSignal,
   onProgress: (done: number, total: number, seconds: number) => void,
+  options: { multiPV?: number; onPartial?: (review: GameReview) => void } = {},
 ): Promise<GameReview> {
   const positions = buildPositions(game.pgn)
   const evaluations: GameReview['evaluations'] = []
@@ -61,7 +62,7 @@ export async function analyzeGame(
     } else {
       const response = await engine.analyze(positions[0].fen, {
         depth,
-        multiPV: 3,
+        multiPV: options.multiPV ?? 3,
         signal,
         moves: [...history],
       })
@@ -79,6 +80,13 @@ export async function analyzeGame(
     const seconds =
       ((performance.now() - start) / 1000 / done) * (positions.length - done)
     onProgress(done, positions.length, seconds)
+    if (options.onPartial && done < positions.length)
+      options.onPartial({
+        game,
+        depth,
+        positions: positions.slice(0, done),
+        evaluations: [...evaluations],
+      })
   }
   return { game, depth, positions, evaluations }
 }
