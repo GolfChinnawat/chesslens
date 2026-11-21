@@ -1,4 +1,6 @@
 export const reviewText = {
+  soundOn: 'เสียงเปิด',
+  soundOff: 'เสียงปิด',
   title: 'รีวิวเกมด้วย Stockfish',
   play: 'เล่นหมากรุก',
   review: 'รีวิวเกม',

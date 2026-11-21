@@ -1,9 +1,10 @@
+import { useReviewSound } from './useReviewSound'
 import { PlanBoard } from './PlanBoard'
 import { DeepAnalysis } from './DeepAnalysis'
 import { Practice } from './Practice'
 import { reviewSummary } from '../../analysis/review-summary'
 import { findOpening } from '../../analysis/openings'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { Square } from 'chess.js'
 import {
@@ -34,6 +35,10 @@ export function ReviewBoard({
   review: GameReview
   analyzing?: boolean
 }) {
+  const layout = useRef<HTMLDivElement>(null)
+  const boardRow = useRef<HTMLDivElement>(null)
+  const boardFooter = useRef<HTMLDivElement>(null)
+  const [fit, setFit] = useState<{ board: number; sidebar: number }>()
   const [planning, setPlanning] = useState(false)
   const [practice, setPractice] = useState(false)
   const [auto, setAuto] = useState(false)
@@ -66,6 +71,45 @@ export function ReviewBoard({
   const last = review.positions.length - 1
   const current = review.positions[ply]
   const evaluation = triedMove ? trial : review.evaluations[boardPly]
+
+  const sound = useReviewSound(boardPly, review.positions[boardPly]?.move?.san)
+
+  useEffect(() => {
+    const container = layout.current
+    const row = boardRow.current
+    const footer = boardFooter.current
+    if (practice || !container || !row || !footer) return
+
+    function measure() {
+      if (!container || !row || !footer) return
+      const viewport = window.innerHeight
+      const sidebar = Math.floor(
+        viewport - container.getBoundingClientRect().top - 16,
+      )
+      const board = Math.floor(
+        viewport - row.getBoundingClientRect().top - footer.offsetHeight - 16,
+      )
+      const next =
+        window.matchMedia('(min-width: 1024px)').matches && board >= 230
+          ? { board, sidebar }
+          : undefined
+      setFit((current) =>
+        current?.board === next?.board && current?.sidebar === next?.sidebar
+          ? current
+          : next,
+      )
+    }
+
+    const resize = new ResizeObserver(measure)
+    resize.observe(footer)
+    resize.observe(container.parentElement ?? container)
+    window.addEventListener('resize', measure)
+    measure()
+    return () => {
+      resize.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [practice])
 
   useEffect(() => {
     if (!auto || practice || ply >= last) return
@@ -201,19 +245,34 @@ export function ReviewBoard({
           >
             ดาวน์โหลด PGN
           </button>
+          <button
+            type="button"
+            className="control"
+            aria-pressed={sound.enabled}
+            onClick={sound.toggle}
+          >
+            {sound.enabled ? t.soundOn : t.soundOff}
+          </button>
           <details className="control">
             <summary className="cursor-pointer">คีย์ลัด</summary>
             <p>← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม</p>
           </details>
         </div>
       </header>
-      <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:gap-7">
+      <div
+        ref={layout}
+        className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:gap-7"
+      >
         <div className="mx-auto w-full min-w-0 max-w-3xl">
           <PlayerStrip
             color={flipped ? 'w' : 'b'}
             name={flipped ? White : Black}
           />
-          <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-2 sm:grid-cols-[2rem_minmax(0,1fr)]">
+          <div
+            ref={boardRow}
+            style={fit ? { maxWidth: fit.board + 42 } : undefined}
+            className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-2 sm:grid-cols-[2rem_minmax(0,1fr)]"
+          >
             <EvalBar
               score={planning ? null : (evaluation?.score ?? null)}
               flipped={flipped}
@@ -269,129 +328,136 @@ export function ReviewBoard({
               )}
             </section>
           </div>
-          <PlayerStrip
-            color={flipped ? 'b' : 'w'}
-            name={flipped ? Black : White}
-          />
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              className="control"
-              aria-label={t.first}
-              disabled={ply === 0}
-              onClick={() => changePly(0)}
-            >
-              ⏮
-            </button>
-            <button
-              className="control"
-              aria-label={t.previous}
-              disabled={ply === 0}
-              onClick={() => changePly(ply - 1)}
-            >
-              ◀
-            </button>
-            <button
-              className="control"
-              aria-label={t.next}
-              disabled={ply === last}
-              onClick={() => changePly(ply + 1)}
-            >
-              ▶
-            </button>
-            <button
-              className="control"
-              aria-label={t.last}
-              disabled={ply === last}
-              onClick={() => changePly(last)}
-            >
-              ⏭
-            </button>
-            <button className="control" onClick={() => setFlipped(!flipped)}>
-              {t.flip}
-            </button>
-            <button
-              className="control"
-              disabled={nextMiss < 0}
-              onClick={() => changePly(nextMiss, true)}
-            >
-              {labels.next}
-            </button>
-            <button
-              className="control"
-              disabled={ply === last || retrying || planning}
-              onClick={() => setAuto(!auto)}
-            >
-              {auto && ply < last ? 'หยุดเล่นอัตโนมัติ' : 'เล่นย้อนหลังอัตโนมัติ'}
-            </button>
-            <button
-              className="control"
-              aria-pressed={planning}
-              disabled={retrying}
-              onClick={() => {
-                setAuto(false)
-                setPlanning(!planning)
-              }}
-            >
-              {planning ? labels.planExit : labels.plan}
-            </button>
-            {missed && !retrying && !planning && (
+          <div ref={boardFooter}>
+            <PlayerStrip
+              color={flipped ? 'b' : 'w'}
+              name={flipped ? Black : White}
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 className="control"
-                onClick={() => setMode(beforeMove ? 'after' : 'before')}
+                aria-label={t.first}
+                disabled={ply === 0}
+                onClick={() => changePly(0)}
               >
-                {beforeMove ? labels.viewAfter : labels.viewBefore}
+                ⏮
               </button>
-            )}
-            {missed && !planning && (
               <button
                 className="control"
+                aria-label={t.previous}
+                disabled={ply === 0}
+                onClick={() => changePly(ply - 1)}
+              >
+                ◀
+              </button>
+              <button
+                className="control"
+                aria-label={t.next}
+                disabled={ply === last}
+                onClick={() => changePly(ply + 1)}
+              >
+                ▶
+              </button>
+              <button
+                className="control"
+                aria-label={t.last}
+                disabled={ply === last}
+                onClick={() => changePly(last)}
+              >
+                ⏭
+              </button>
+              <button className="control" onClick={() => setFlipped(!flipped)}>
+                {t.flip}
+              </button>
+              <button
+                className="control"
+                disabled={nextMiss < 0}
+                onClick={() => changePly(nextMiss, true)}
+              >
+                {labels.next}
+              </button>
+              <button
+                className="control"
+                disabled={ply === last || retrying || planning}
+                onClick={() => setAuto(!auto)}
+              >
+                {auto && ply < last ? 'หยุดเล่นอัตโนมัติ' : 'เล่นย้อนหลังอัตโนมัติ'}
+              </button>
+              <button
+                className="control"
+                aria-pressed={planning}
+                disabled={retrying}
                 onClick={() => {
-                  setTrial(undefined)
                   setAuto(false)
-                  setMode(retrying ? 'after' : 'retry')
+                  setPlanning(!planning)
                 }}
               >
-                {retrying ? labels.close : labels.retry}
+                {planning ? labels.planExit : labels.plan}
               </button>
+              {missed && !retrying && !planning && (
+                <button
+                  className="control"
+                  onClick={() => setMode(beforeMove ? 'after' : 'before')}
+                >
+                  {beforeMove ? labels.viewAfter : labels.viewBefore}
+                </button>
+              )}
+              {missed && !planning && (
+                <button
+                  className="control"
+                  onClick={() => {
+                    setTrial(undefined)
+                    setAuto(false)
+                    setMode(retrying ? 'after' : 'retry')
+                  }}
+                >
+                  {retrying ? labels.close : labels.retry}
+                </button>
+              )}
+            </div>
+            {!planning && grade && current.move && (
+              <div className="mt-3 flex items-start gap-2 text-sm">
+                <GradeIcon kind={grade.kind} />
+                <p>
+                  <span className="block text-slate-300">
+                    {triedMove
+                      ? labels.trialPosition
+                      : beforeMove
+                        ? labels.beforePosition
+                        : labels.afterPosition}
+                  </span>
+                  {labels.move(current.move.san, labels.grade[grade.kind])}
+                  {beforeMove && !triedMove && grade.bestSan && (
+                    <span className="block text-slate-300">
+                      {labels.recommend(grade.bestSan)}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+            {analyzing && current.move && !grade && (
+              <p className="mt-2 text-sm text-slate-300" role="status">
+                {labels.pendingGrade}
+              </p>
+            )}
+            {retrying && (
+              <label className="mt-2 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={showBest}
+                  onChange={(event) => setShowBest(event.target.checked)}
+                />
+                {labels.better}
+              </label>
             )}
           </div>
-          {!planning && grade && current.move && (
-            <div className="mt-3 flex items-start gap-2 text-sm">
-              <GradeIcon kind={grade.kind} />
-              <p>
-                <span className="block text-slate-300">
-                  {triedMove
-                    ? labels.trialPosition
-                    : beforeMove
-                      ? labels.beforePosition
-                      : labels.afterPosition}
-                </span>
-                {labels.move(current.move.san, labels.grade[grade.kind])}
-                {beforeMove && !triedMove && grade.bestSan && (
-                  <span className="block text-slate-300">
-                    {labels.recommend(grade.bestSan)}
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
-          {analyzing && current.move && !grade && (
-            <p className="mt-2 text-sm text-slate-300" role="status">
-              {labels.pendingGrade}
-            </p>
-          )}
-          {retrying && (
-            <label className="mt-2 flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showBest}
-                onChange={(event) => setShowBest(event.target.checked)}
-              />
-              {labels.better}
-            </label>
-          )}
         </div>
-        <aside className="min-w-0 space-y-3" aria-label={labels.summary}>
+        <aside
+          style={fit ? { maxHeight: fit.sidebar } : undefined}
+          className={`min-w-0 space-y-3 ${fit ? 'overflow-y-auto overscroll-contain pr-2' : ''}`}
+          aria-label={labels.summary}
+          tabIndex={fit ? 0 : undefined}
+        >
           <section className="panel">
             <h3 className="font-semibold">{t.graph}</h3>
             <p className="text-sm text-slate-300">{t.eval}</p>
