@@ -71,8 +71,8 @@ export default function ReviewPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-9">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-slate-800 pb-5">
+    <main className="mx-auto max-w-[79rem] px-4 py-4 sm:px-8 sm:py-6">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div>
           <p className="text-sm font-semibold tracking-wide text-cyan-200">
             ChessLens

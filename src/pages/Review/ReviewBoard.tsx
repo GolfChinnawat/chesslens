@@ -157,21 +157,23 @@ export function ReviewBoard({
 
   return (
     <article className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold">
-          {t.players(White ?? t.unknown, Black ?? t.unknown)}
-        </h2>
-        <p className="text-sm text-slate-300">
-          {[
-            Result,
-            Date,
-            opening ? `${opening.eco} · ${opening.name}` : ECO,
-            `${t.depth} ${review.depth}`,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="break-words text-sm font-medium text-slate-100">
+            {t.players(White ?? t.unknown, Black ?? t.unknown)}
+          </h2>
+          <p className="mt-1 break-words text-xs text-slate-400">
+            {[
+              Result,
+              Date,
+              opening ? `${opening.eco} · ${opening.name}` : ECO,
+              `${t.depth} ${review.depth}`,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <button
             className="control"
             disabled={analyzing}
@@ -205,9 +207,13 @@ export function ReviewBoard({
           </details>
         </div>
       </header>
-      <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <div className="min-w-0">
-          <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-2">
+      <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:gap-7">
+        <div className="mx-auto w-full min-w-0 max-w-3xl">
+          <PlayerStrip
+            color={flipped ? 'w' : 'b'}
+            name={flipped ? White : Black}
+          />
+          <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-2 sm:grid-cols-[2rem_minmax(0,1fr)]">
             <EvalBar
               score={planning ? null : (evaluation?.score ?? null)}
               flipped={flipped}
@@ -263,6 +269,10 @@ export function ReviewBoard({
               )}
             </section>
           </div>
+          <PlayerStrip
+            color={flipped ? 'b' : 'w'}
+            name={flipped ? Black : White}
+          />
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               className="control"
@@ -380,69 +390,12 @@ export function ReviewBoard({
               {labels.better}
             </label>
           )}
-          <div className="mt-4">
-            <section className="panel mb-4 space-y-2">
-              <h3 className="font-semibold">จุดเปลี่ยนของเกม</h3>
-              {summary.swings.length ? (
-                <ol className="flex flex-wrap gap-2">
-                  {summary.swings.map(({ ply, move, swing }) => (
-                    <li key={ply}>
-                      <button
-                        className="control"
-                        onClick={() => changePly(ply, true)}
-                      >
-                        {move.number}
-                        {move.color === 'w' ? '.' : '…'} {move.san} · −
-                        {swing.toFixed(1)} จุด
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="text-sm">ยังไม่มีคะแนนประเมินที่ลดลง</p>
-              )}
-              <table className="w-full text-sm">
-                <caption className="text-left font-semibold">
-                  ความแม่นยำแยกช่วงเกม
-                </caption>
-                <thead>
-                  <tr>
-                    <td />
-                    <th scope="col">ขาว</th>
-                    <th scope="col">ดำ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(
-                    [
-                      ['opening', 'เปิดเกม'],
-                      ['middle', 'กลางเกม'],
-                      ['end', 'ท้ายเกม'],
-                    ] as const
-                  ).map(([phase, label]) => (
-                    <tr key={phase}>
-                      <th scope="row" className="text-left">
-                        {label}
-                      </th>
-                      <td className="text-center">
-                        {average(summary.phases[phase].w)}
-                      </td>
-                      <td className="text-center">
-                        {average(summary.phases[phase].b)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-            <GradeSummary data={classification} />
-          </div>
         </div>
-        <div className="min-w-0 space-y-4">
+        <aside className="min-w-0 space-y-3" aria-label={labels.summary}>
           <section className="panel">
             <h3 className="font-semibold">{t.graph}</h3>
             <p className="text-sm text-slate-300">{t.eval}</p>
-            <div className="mt-2 h-44 w-full min-w-0">
+            <div className="mt-2 h-28 w-full min-w-0 sm:h-32">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chart}
@@ -496,6 +449,64 @@ export function ReviewBoard({
               </ResponsiveContainer>
             </div>
           </section>
+          <GradeSummary data={classification} names={[White, Black]} />
+          <details className="panel space-y-2">
+            <summary className="cursor-pointer font-semibold">
+              จุดเปลี่ยนและความแม่นยำแยกช่วงเกม
+            </summary>
+
+            {summary.swings.length ? (
+              <ol className="flex flex-wrap gap-2">
+                {summary.swings.map(({ ply, move, swing }) => (
+                  <li key={ply}>
+                    <button
+                      className="control"
+                      onClick={() => changePly(ply, true)}
+                    >
+                      {move.number}
+                      {move.color === 'w' ? '.' : '…'} {move.san} · −
+                      {swing.toFixed(1)} จุด
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-sm">ยังไม่มีคะแนนประเมินที่ลดลง</p>
+            )}
+            <table className="w-full text-sm">
+              <caption className="text-left font-semibold">
+                ความแม่นยำแยกช่วงเกม
+              </caption>
+              <thead>
+                <tr>
+                  <td />
+                  <th scope="col">ขาว</th>
+                  <th scope="col">ดำ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ['opening', 'เปิดเกม'],
+                    ['middle', 'กลางเกม'],
+                    ['end', 'ท้ายเกม'],
+                  ] as const
+                ).map(([phase, label]) => (
+                  <tr key={phase}>
+                    <th scope="row" className="text-left">
+                      {label}
+                    </th>
+                    <td className="text-center">
+                      {average(summary.phases[phase].w)}
+                    </td>
+                    <td className="text-center">
+                      {average(summary.phases[phase].b)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
           <section className="panel">
             <h3 className="font-semibold">{t.lines}</h3>
             {!planning && (!retrying || triedMove) && (
@@ -586,9 +597,26 @@ export function ReviewBoard({
               )}
             </ol>
           </section>
-        </div>
+        </aside>
       </div>
     </article>
+  )
+}
+
+function PlayerStrip({ color, name }: { color: 'w' | 'b'; name?: string }) {
+  return (
+    <div className="ml-9 flex min-w-0 items-center gap-2 py-2 text-sm sm:ml-10">
+      <span
+        aria-hidden="true"
+        className={`size-3 shrink-0 rounded-full border border-slate-500 ${color === 'w' ? 'bg-slate-100' : 'bg-slate-950'}`}
+      />
+      <span className="truncate font-semibold" title={name}>
+        {name && name !== '?' ? name : color === 'w' ? t.white : t.black}
+      </span>
+      <span className="shrink-0 text-xs text-slate-400">
+        {color === 'w' ? t.white : t.black}
+      </span>
+    </div>
   )
 }
 

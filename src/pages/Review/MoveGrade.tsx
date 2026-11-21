@@ -50,8 +50,10 @@ export function GradeIcon({ kind }: { kind: MoveClass }) {
 
 export function GradeSummary({
   data,
+  names,
 }: {
   data: ReturnType<typeof classifyReview>
+  names?: [string | undefined, string | undefined]
 }) {
   const { white, black } = data
   const accuracy = (value: number | null) =>
@@ -59,12 +61,20 @@ export function GradeSummary({
   return (
     <section className="panel">
       <h3 className="font-semibold">{t.summary}</h3>
-      <table className="mt-2 w-full text-sm">
+      <table className="mt-2 w-full table-fixed text-sm">
         <thead>
           <tr>
             <th scope="col" aria-label={t.summary} />
-            <th scope="col">{reviewText.white}</th>
-            <th scope="col">{reviewText.black}</th>
+            <th scope="col" className="w-[24%] px-1">
+              <span className="block truncate" title={names?.[0]}>
+                {names?.[0] && names[0] !== '?' ? names[0] : reviewText.white}
+              </span>
+            </th>
+            <th scope="col" className="w-[24%] px-1">
+              <span className="block truncate" title={names?.[1]}>
+                {names?.[1] && names[1] !== '?' ? names[1] : reviewText.black}
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -72,10 +82,10 @@ export function GradeSummary({
             <th scope="row" className="py-2 text-left">
               {t.accuracy}
             </th>
-            <td className="text-center font-mono">
+            <td className="text-center font-mono font-bold text-cyan-100">
               {accuracy(white.accuracy)}
             </td>
-            <td className="text-center font-mono">
+            <td className="text-center font-mono font-bold text-cyan-100">
               {accuracy(black.accuracy)}
             </td>
           </tr>
@@ -83,7 +93,7 @@ export function GradeSummary({
             <tr key={kind} className="border-t border-slate-700">
               <th scope="row" className="py-1 text-left font-normal">
                 <span className="flex items-center gap-2">
-                  <GradeIcon kind={kind} /> {t.grade[kind]}
+                  <GradeIcon kind={kind} /> {t.grade[kind].split(' · ')[0]}
                 </span>
               </th>
               <td className="text-center tabular-nums">
