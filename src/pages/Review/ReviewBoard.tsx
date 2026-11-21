@@ -1,3 +1,4 @@
+import { PlanBoard } from './PlanBoard'
 import { DeepAnalysis } from './DeepAnalysis'
 import { Practice } from './Practice'
 import { reviewSummary } from '../../analysis/review-summary'
@@ -33,6 +34,7 @@ export function ReviewBoard({
   review: GameReview
   analyzing?: boolean
 }) {
+  const [planning, setPlanning] = useState(false)
   const [practice, setPractice] = useState(false)
   const [auto, setAuto] = useState(false)
   const [ply, setPly] = useState(0)
@@ -41,6 +43,7 @@ export function ReviewBoard({
   const [mode, setMode] = useState<'after' | 'before' | 'retry'>('after')
   const [trial, setTrial] = useState<PositionEval | null>()
   const changePly = useCallback((index: number, before = false) => {
+    setPlanning(false)
     setPly(index)
     setMode(before ? 'before' : 'after')
     setTrial(undefined)
@@ -205,12 +208,21 @@ export function ReviewBoard({
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-2">
-            <EvalBar score={evaluation?.score ?? null} flipped={flipped} />
+            <EvalBar
+              score={planning ? null : (evaluation?.score ?? null)}
+              flipped={flipped}
+            />
             <section
               aria-label={t.board}
               className="relative min-w-0 overflow-hidden rounded-lg border border-slate-700"
             >
-              {retrying ? (
+              {planning ? (
+                <PlanBoard
+                  key={boardPly}
+                  fen={review.positions[boardPly].fen}
+                  flipped={flipped}
+                />
+              ) : retrying ? (
                 <RetryMove
                   key={ply}
                   review={review}
@@ -296,12 +308,23 @@ export function ReviewBoard({
             </button>
             <button
               className="control"
-              disabled={ply === last || retrying}
+              disabled={ply === last || retrying || planning}
               onClick={() => setAuto(!auto)}
             >
               {auto && ply < last ? 'หยุดเล่นอัตโนมัติ' : 'เล่นย้อนหลังอัตโนมัติ'}
             </button>
-            {missed && !retrying && (
+            <button
+              className="control"
+              aria-pressed={planning}
+              disabled={retrying}
+              onClick={() => {
+                setAuto(false)
+                setPlanning(!planning)
+              }}
+            >
+              {planning ? labels.planExit : labels.plan}
+            </button>
+            {missed && !retrying && !planning && (
               <button
                 className="control"
                 onClick={() => setMode(beforeMove ? 'after' : 'before')}
@@ -309,7 +332,7 @@ export function ReviewBoard({
                 {beforeMove ? labels.viewAfter : labels.viewBefore}
               </button>
             )}
-            {missed && (
+            {missed && !planning && (
               <button
                 className="control"
                 onClick={() => {
@@ -322,7 +345,7 @@ export function ReviewBoard({
               </button>
             )}
           </div>
-          {grade && current.move && (
+          {!planning && grade && current.move && (
             <div className="mt-3 flex items-start gap-2 text-sm">
               <GradeIcon kind={grade.kind} />
               <p>
@@ -341,6 +364,11 @@ export function ReviewBoard({
                 )}
               </p>
             </div>
+          )}
+          {analyzing && current.move && !grade && (
+            <p className="mt-2 text-sm text-slate-300" role="status">
+              {labels.pendingGrade}
+            </p>
           )}
           {retrying && (
             <label className="mt-2 flex items-center gap-2 text-sm">
@@ -470,7 +498,7 @@ export function ReviewBoard({
           </section>
           <section className="panel">
             <h3 className="font-semibold">{t.lines}</h3>
-            {(!retrying || triedMove) && (
+            {!planning && (!retrying || triedMove) && (
               <label className="mt-2 flex items-center gap-2 text-sm text-slate-300">
                 <input
                   type="checkbox"
@@ -480,7 +508,9 @@ export function ReviewBoard({
                 แนวเดินเพิ่มเติม
               </label>
             )}
-            {evaluation?.lines.length ? (
+            {planning ? (
+              <p className="mt-2 text-sm text-slate-300">{labels.planHelp}</p>
+            ) : evaluation?.lines.length ? (
               <ol className="mt-3 space-y-2 text-sm">
                 {evaluation.lines.map((line, index) => (
                   <li key={line.rank} className="flex gap-2">
@@ -508,7 +538,8 @@ export function ReviewBoard({
                     : t.terminal}
               </p>
             )}
-            {!analyzing &&
+            {!planning &&
+              !analyzing &&
               !retrying &&
               !review.positions[boardPly].terminal && (
                 <DeepAnalysis key={boardPly} review={review} ply={boardPly} />
@@ -540,6 +571,15 @@ export function ReviewBoard({
                         )}
                         {move.number}
                         {move.color === 'w' ? '.' : '…'} {move.san}
+                        {classification.grades[index] && (
+                          <span className="ml-1 font-sans font-semibold">
+                            {
+                              labels.grade[
+                                classification.grades[index].kind
+                              ].split(' · ')[0]
+                            }
+                          </span>
+                        )}
                       </button>
                     </li>
                   ),
