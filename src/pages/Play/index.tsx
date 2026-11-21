@@ -92,8 +92,8 @@ export function PlayPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-9">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-slate-800 pb-5">
+    <main className="play-layout mx-auto max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div>
           <p className="text-sm font-semibold tracking-wide text-cyan-200">
             ChessLens
@@ -117,25 +117,29 @@ export function PlayPage() {
           </a>
         </nav>
       </header>
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="min-w-0">
+      <div className="play-columns grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="play-board-column min-w-0">
           <p className="mb-2 text-sm text-slate-300">
             {colorLabel(opponent(orientation))} ·{' '}
             {playerLabel(opponent(orientation))}
           </p>
-          <PlayBoard
-            game={game}
-            fen={fen}
-            lastMove={lastMove}
-            orientation={orientation}
-            canMove={canMove}
-            play={(move) => state.play(move, game, 'player')}
-          />
+          <div className="play-board-slot">
+            <div className="play-board-frame">
+              <PlayBoard
+                game={game}
+                fen={fen}
+                lastMove={lastMove}
+                orientation={orientation}
+                canMove={canMove}
+                play={(move) => state.play(move, game, 'player')}
+              />
+            </div>
+          </div>
           <p className="mt-2 text-sm text-slate-300">
             {colorLabel(orientation)} · {playerLabel(orientation)}
           </p>
         </div>
-        <aside className="min-w-0 space-y-4">
+        <aside className="play-sidebar min-w-0 space-y-4">
           <section className="panel">
             <p role="status" className="font-semibold text-cyan-200">
               {status}

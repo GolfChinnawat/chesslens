@@ -29,3 +29,37 @@
     scrollbar-gutter: stable;
   }
 }
+
+@media (min-width: 768px) and (min-height: 480px) {
+  .play-layout {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+  }
+
+  .play-columns {
+    min-height: 0;
+  }
+
+  .play-board-column {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    min-height: 0;
+  }
+
+  .play-board-slot {
+    container-type: size;
+    min-height: 0;
+  }
+
+  .play-board-frame {
+    width: min(100cqw, 100cqh);
+  }
+
+  .play-sidebar {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-right: 0.5rem;
+  }
+}
