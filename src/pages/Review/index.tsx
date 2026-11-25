@@ -72,9 +72,9 @@ export default function ReviewPage() {
 
   return (
     <main className="mx-auto max-w-[79rem] px-4 py-4 sm:px-8 sm:py-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-raised pb-3">
         <div>
-          <p className="text-sm font-semibold tracking-wide text-cyan-200">
+          <p className="text-sm font-semibold tracking-wide text-accent">
             ChessLens
           </p>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{t.title}</h1>
@@ -92,13 +92,13 @@ export default function ReviewPage() {
             </button>
           )}
           {import.meta.env.VITE_SUPABASE_URL && (
-            <a href="?view=account" className="text-sm text-cyan-200">
+            <a href="?view=account" className="text-sm text-accent">
               บัญชีและคลังเกม
             </a>
           )}
           <a
             href="./"
-            className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+            className="text-sm text-accent underline-offset-4 hover:underline"
           >
             {t.play}
           </a>
@@ -124,12 +124,12 @@ export default function ReviewPage() {
           </p>
           <progress
             aria-label={t.analyze}
-            className="mt-2 w-full accent-cyan-300"
+            className="mt-2 w-full accent-accent"
             value={progress.total ? progress.done : undefined}
             max={progress.total || 1}
           />
           {progress.seconds > 0 && (
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-secondary">
               {t.eta(progress.seconds)}
             </p>
           )}

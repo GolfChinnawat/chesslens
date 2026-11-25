@@ -209,7 +209,7 @@ export function ReviewBoard({
           <h2 className="break-words text-sm font-medium text-slate-100">
             {t.players(White ?? t.unknown, Black ?? t.unknown)}
           </h2>
-          <p className="mt-1 break-words text-xs text-slate-400">
+          <p className="mt-1 break-words text-xs text-muted">
             {[
               Result,
               Date,
@@ -263,7 +263,7 @@ export function ReviewBoard({
           </button>
           <details className="control relative">
             <summary className="cursor-pointer">คีย์ลัด</summary>
-            <p className="absolute right-0 top-full z-30 mt-1 w-56 rounded-md border border-slate-600 bg-slate-900 p-3 shadow-lg">
+            <p className="absolute right-0 top-full z-30 mt-1 w-56 rounded-md border border-edge bg-surface p-3 shadow-lg">
               ← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม
             </p>
           </details>
@@ -289,7 +289,7 @@ export function ReviewBoard({
             />
             <section
               aria-label={t.board}
-              className="relative min-w-0 overflow-hidden rounded-lg border border-slate-700"
+              className="relative min-w-0 overflow-hidden rounded-lg border border-line"
             >
               {planning ? (
                 <PlanBoard
@@ -317,8 +317,8 @@ export function ReviewBoard({
                     areArrowsAllowed={false}
                     arePiecesDraggable={false}
                     customArrows={arrows}
-                    customLightSquareStyle={{ backgroundColor: '#dce8d8' }}
-                    customDarkSquareStyle={{ backgroundColor: '#56817b' }}
+                    customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
+                    customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
                     customSquareStyles={
                       move
                         ? {
@@ -432,7 +432,7 @@ export function ReviewBoard({
               <div className="mt-3 flex items-start gap-2 text-sm">
                 <GradeIcon kind={grade.kind} />
                 <p>
-                  <span className="block text-slate-300">
+                  <span className="block text-secondary">
                     {triedMove
                       ? labels.trialPosition
                       : beforeMove
@@ -441,7 +441,7 @@ export function ReviewBoard({
                   </span>
                   {labels.move(current.move.san, labels.grade[grade.kind])}
                   {beforeMove && !triedMove && grade.bestSan && (
-                    <span className="block text-slate-300">
+                    <span className="block text-secondary">
                       {labels.recommend(grade.bestSan)}
                     </span>
                   )}
@@ -449,7 +449,7 @@ export function ReviewBoard({
               </div>
             )}
             {analyzing && current.move && !grade && (
-              <p className="mt-2 text-sm text-slate-300" role="status">
+              <p className="mt-2 text-sm text-secondary" role="status">
                 {labels.pendingGrade}
               </p>
             )}
@@ -473,7 +473,7 @@ export function ReviewBoard({
         >
           <section className="panel">
             <h3 className="font-semibold">{t.graph}</h3>
-            <p className="text-sm text-slate-300">{t.eval}</p>
+            <p className="text-sm text-secondary">{t.eval}</p>
             <div className="mt-2 h-28 w-full min-w-0 sm:h-32">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -501,7 +501,7 @@ export function ReviewBoard({
                   <Tooltip
                     content={({ active, payload }) =>
                       active && payload?.[0]?.payload ? (
-                        <div className="rounded bg-slate-800 px-2 py-1 text-sm text-slate-50">
+                        <div className="rounded bg-raised px-2 py-1 text-sm text-foreground">
                           {t.ply(payload[0].payload.ply)} ·{' '}
                           {payload[0].payload.label}
                         </div>
@@ -511,8 +511,8 @@ export function ReviewBoard({
                   <Area
                     type="linear"
                     dataKey="score"
-                    stroke="#67e8f9"
-                    fill="#164e63"
+                    stroke="var(--color-accent)"
+                    fill="var(--chart-fill)"
                     baseValue={0}
                     isAnimationActive={false}
                   />
@@ -589,7 +589,7 @@ export function ReviewBoard({
           <section className="panel">
             <h3 className="font-semibold">{t.lines}</h3>
             {!planning && (!retrying || triedMove) && (
-              <label className="mt-2 flex items-center gap-2 text-sm text-slate-300">
+              <label className="mt-2 flex items-center gap-2 text-sm text-secondary">
                 <input
                   type="checkbox"
                   checked={more}
@@ -599,7 +599,7 @@ export function ReviewBoard({
               </label>
             )}
             {planning ? (
-              <p className="mt-2 text-sm text-slate-300">{labels.planHelp}</p>
+              <p className="mt-2 text-sm text-secondary">{labels.planHelp}</p>
             ) : evaluation?.lines.length ? (
               <ol className="mt-3 space-y-2 text-sm">
                 {evaluation.lines.map((line, index) => (
@@ -620,7 +620,7 @@ export function ReviewBoard({
                 ))}
               </ol>
             ) : (
-              <p className="mt-2 text-sm text-slate-300">
+              <p className="mt-2 text-sm text-secondary">
                 {evaluation?.score
                   ? t.terminal
                   : retrying
@@ -640,7 +640,7 @@ export function ReviewBoard({
             <ol className="flex max-h-52 flex-wrap gap-1 overflow-auto">
               <li>
                 <button
-                  className="control aria-current:border-cyan-200"
+                  className="control aria-current:border-accent"
                   aria-current={ply === 0}
                   onClick={() => changePly(0)}
                 >
@@ -652,7 +652,7 @@ export function ReviewBoard({
                   move && (
                     <li key={index}>
                       <button
-                        className="control inline-flex items-center gap-1 font-mono aria-current:bg-cyan-200 aria-current:text-slate-950"
+                        className="control inline-flex items-center gap-1 font-mono aria-current:bg-accent aria-current:text-canvas"
                         aria-current={ply === index}
                         onClick={() => changePly(index)}
                       >
@@ -687,12 +687,12 @@ function PlayerStrip({ color, name }: { color: 'w' | 'b'; name?: string }) {
     <div className="ml-9 flex min-w-0 items-center gap-2 py-2 text-sm sm:ml-10">
       <span
         aria-hidden="true"
-        className={`size-3 shrink-0 rounded-full border border-slate-500 ${color === 'w' ? 'bg-slate-100' : 'bg-slate-950'}`}
+        className={`size-3 shrink-0 rounded-full border border-subtle ${color === 'w' ? 'bg-slate-100' : 'bg-canvas'}`}
       />
       <span className="truncate font-semibold" title={name}>
         {name && name !== '?' ? name : color === 'w' ? t.white : t.black}
       </span>
-      <span className="shrink-0 text-xs text-slate-400">
+      <span className="shrink-0 text-xs text-muted">
         {color === 'w' ? t.white : t.black}
       </span>
     </div>
@@ -710,13 +710,13 @@ function EvalBar({
   return (
     <div
       aria-label={t.eval}
-      className="relative overflow-hidden rounded-md border border-slate-600 bg-slate-800"
+      className="relative overflow-hidden rounded-md border border-edge bg-raised"
     >
       <div
         className={`absolute inset-x-0 bg-slate-100 transition-[height] duration-200 motion-reduce:transition-none ${flipped ? 'top-0' : 'bottom-0'}`}
         style={{ height: `${white}%` }}
       />
-      <output className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-slate-950 py-1 text-center font-mono text-[10px] text-slate-50">
+      <output className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-canvas py-1 text-center font-mono text-[10px] text-foreground">
         {score ? formatScore(score) : '—'}
       </output>
     </div>

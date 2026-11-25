@@ -1,13 +1,4 @@
-body:has(.opening) {
-  background:
-    radial-gradient(ellipse at 74% 0%, #1e2810 0%, transparent 31rem), #0b0d09;
-}
-
 .opening {
-  --opening-muted: #a9afa0;
-  --opening-accent: #97ff12;
-  --opening-border: #363d2c;
-  --opening-surface: #171a14;
   width: min(100% - 2rem, 72rem);
   margin-inline: auto;
   padding-block: 1rem 2.5rem;
@@ -24,14 +15,14 @@ body:has(.opening) {
 
 .opening-header {
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--opening-border);
+  border-bottom: 1px solid var(--color-line);
   padding-bottom: 0.85rem;
 }
 
 .opening-brand {
   font-size: 1.12rem;
   font-weight: 800;
-  color: var(--opening-accent);
+  color: var(--color-accent);
 }
 
 .opening-header nav {
@@ -42,7 +33,7 @@ body:has(.opening) {
 }
 
 .opening-header nav a {
-  color: var(--opening-muted);
+  color: var(--color-muted);
   padding: 0.42rem 0.6rem;
   border-radius: 0.4rem;
 }
@@ -50,7 +41,7 @@ body:has(.opening) {
 .opening-header nav a:hover,
 .opening-header nav [aria-current='page'] {
   background: #222b15;
-  color: var(--opening-accent);
+  color: var(--color-accent);
 }
 
 .opening-intro {
@@ -66,7 +57,7 @@ body:has(.opening) {
 .opening-intro p,
 .opening-hint,
 .opening-move p {
-  color: var(--opening-muted);
+  color: var(--color-muted);
   font-size: 0.88rem;
   line-height: 1.55;
 }
@@ -90,7 +81,7 @@ body:has(.opening) {
   display: grid;
   place-items: start center;
   padding: clamp(0.45rem, 1.15vw, 0.85rem);
-  border: 1px solid var(--opening-border);
+  border: 1px solid var(--color-line);
   border-radius: 1.15rem;
   background: linear-gradient(150deg, #202717, #11140f 65%);
 }
@@ -110,9 +101,9 @@ body:has(.opening) {
 }
 
 .opening-card {
-  border: 1px solid var(--opening-border);
+  border: 1px solid var(--color-line);
   border-radius: 0.85rem;
-  background: linear-gradient(145deg, #1d2317, var(--opening-surface) 60%);
+  background: linear-gradient(145deg, #1d2317, var(--color-surface) 60%);
   padding: 1rem;
 }
 
@@ -151,14 +142,14 @@ body:has(.opening) {
 
 .opening-file input {
   width: 100%;
-  color: var(--opening-muted);
+  color: var(--color-muted);
   font-size: 0.85rem;
 }
 
 .opening-file input::file-selector-button {
   margin-inline-end: 0.65rem;
   padding: 0.35rem 0.55rem;
-  border: 1px solid var(--opening-border);
+  border: 1px solid var(--color-line);
   border-radius: 0.35rem;
   background: #20251a;
   color: #eff4e9;
@@ -172,49 +163,9 @@ body:has(.opening) {
   align-items: end;
 }
 
-.opening .opening-primary {
-  min-height: 2.75rem;
-  border: 1px solid #dbffb4;
-  border-radius: 999px;
-  padding-inline: 1rem;
-  background: linear-gradient(
-    155deg,
-    #dcffab 0%,
-    var(--opening-accent) 52%,
-    #8bd332 100%
-  );
-  box-shadow:
-    inset 0 1px 0 #ffffff80,
-    0 3px 0 #476c1b,
-    0 7px 20px #97ff1226;
-  color: #111705;
-  font-weight: 800;
-}
-
-.opening .opening-primary:enabled:hover {
-  border-color: #edffd8;
-  background: linear-gradient(155deg, #edffc8, #a7ff42 58%, #94e42f);
-  box-shadow:
-    inset 0 1px 0 #ffffff99,
-    0 3px 0 #4d7920,
-    0 7px 22px #97ff1240;
-}
-
-.opening .opening-primary:enabled:active {
-  transform: translateY(2px);
-  box-shadow:
-    inset 0 1px 0 #ffffff66,
-    0 1px 0 #476c1b;
-}
-
-.opening :is(button, select, input, textarea, a):focus-visible {
-  outline: 2px solid var(--opening-accent);
-  outline-offset: 3px;
-}
-
 .opening-link {
   justify-self: start;
-  color: var(--opening-accent);
+  color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 0.2em;
   font-size: 0.85rem;
@@ -226,17 +177,17 @@ body:has(.opening) {
 }
 
 .opening-accuracy strong {
-  color: var(--opening-accent);
+  color: var(--color-accent);
   font-size: 1.1rem;
 }
 
 .opening-accuracy span {
-  color: var(--opening-muted);
+  color: var(--color-muted);
 }
 
 .opening-answer {
   padding-top: 0.8rem;
-  border-top: 1px solid var(--opening-border);
+  border-top: 1px solid var(--color-line);
 }
 
 .opening-result p,
@@ -248,7 +199,7 @@ body:has(.opening) {
 }
 
 .opening-result[data-correct='true'] p {
-  color: var(--opening-accent);
+  color: var(--color-accent);
   background: #263911;
 }
 

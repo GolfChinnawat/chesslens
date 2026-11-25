@@ -68,7 +68,7 @@ export default function AccountPage() {
     <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">บัญชี ChessLens</h1>
-        <nav className="flex gap-3 text-cyan-200">
+        <nav className="flex gap-3 text-accent">
           <a href="./">เล่นกับบอท</a>
           <a href="?view=review">รีวิวเกม</a>
         </nav>
@@ -106,7 +106,7 @@ export default function AccountPage() {
                 maxLength={72}
               />
             </label>
-            <button className="control" disabled={busy}>
+            <button className="control primary-control" disabled={busy}>
               {signup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
             </button>
           </form>

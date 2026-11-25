@@ -50,7 +50,7 @@ export function DeepAnalysis({
   }
 
   return (
-    <details className="mt-3 border-t border-slate-700 pt-2 text-sm">
+    <details className="mt-3 border-t border-line pt-2 text-sm">
       <summary className="cursor-pointer">วิเคราะห์ตำแหน่งนี้ให้ลึกขึ้น</summary>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <label>

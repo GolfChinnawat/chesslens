@@ -82,15 +82,15 @@ export function GradeSummary({
             <th scope="row" className="py-2 text-left">
               {t.accuracy}
             </th>
-            <td className="text-center font-mono font-bold text-cyan-100">
+            <td className="text-center font-mono font-bold text-accent-light">
               {accuracy(white.accuracy)}
             </td>
-            <td className="text-center font-mono font-bold text-cyan-100">
+            <td className="text-center font-mono font-bold text-accent-light">
               {accuracy(black.accuracy)}
             </td>
           </tr>
           {moveClasses.map((kind) => (
-            <tr key={kind} className="border-t border-slate-700">
+            <tr key={kind} className="border-t border-line">
               <th scope="row" className="py-1 text-left font-normal">
                 <span className="flex items-center gap-2">
                   <GradeIcon kind={kind} /> {t.grade[kind].split(' · ')[0]}
@@ -106,8 +106,8 @@ export function GradeSummary({
           ))}
         </tbody>
       </table>
-      <details className="mt-3 border-t border-slate-700 pt-2 text-sm">
-        <summary className="cursor-pointer text-slate-300">{t.rating}</summary>
+      <details className="mt-3 border-t border-line pt-2 text-sm">
+        <summary className="cursor-pointer text-secondary">{t.rating}</summary>
         <dl className="mt-2 grid grid-cols-2 gap-2">
           <div>
             <dt>{reviewText.white}</dt>
@@ -118,7 +118,7 @@ export function GradeSummary({
             <dd>{black.rating ?? '—'}</dd>
           </div>
         </dl>
-        <p className="mt-2 text-xs text-slate-300">{t.ratingNote}</p>
+        <p className="mt-2 text-xs text-secondary">{t.ratingNote}</p>
       </details>
     </section>
   )

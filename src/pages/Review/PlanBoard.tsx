@@ -73,8 +73,8 @@ export function PlanBoard({
             )
           }
         }}
-        customLightSquareStyle={{ backgroundColor: '#dce8d8' }}
-        customDarkSquareStyle={{ backgroundColor: '#56817b' }}
+        customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
+        customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
         customSquareStyles={{
           ...Object.fromEntries(
             legal.map((move) => [
@@ -93,7 +93,7 @@ export function PlanBoard({
       {controls &&
         createPortal(
           <div className="space-y-2 px-3 pb-3">
-            <p className="text-sm text-slate-300">{t.planHelp}</p>
+            <p className="text-sm text-secondary">{t.planHelp}</p>
             {promotion && (
               <div
                 className="flex flex-wrap gap-2"

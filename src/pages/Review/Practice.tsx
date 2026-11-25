@@ -119,6 +119,8 @@ function Exercise({
   return (
     <div className="max-w-xl space-y-3">
       <Chessboard
+        customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
+        customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
         id="practice-board"
         position={state === 'correct' ? game.move(best.uci).after : fen}
         boardOrientation={side === 'w' ? 'white' : 'black'}

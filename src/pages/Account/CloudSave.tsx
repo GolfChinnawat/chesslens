@@ -27,7 +27,7 @@ export function CloudSave({ review }: { review: GameReview }) {
   }
   return (
     <>
-      <button className="control" disabled={busy} onClick={() => void save()}>
+      <button className="control primary-control" disabled={busy} onClick={() => void save()}>
         บันทึกเข้าคลังเกม
       </button>
       {status && (

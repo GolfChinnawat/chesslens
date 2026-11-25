@@ -1,26 +1,89 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-canvas: #0b0d09;
+  --color-surface: #171a14;
+  --color-raised: #22271c;
+  --color-line: #363d2c;
+  --color-edge: #59634a;
+  --color-subtle: #818a72;
+  --color-muted: #a9afa0;
+  --color-secondary: #d6dece;
+  --color-foreground: #f3f6ee;
+  --color-accent: #97ff12;
+}
+
+:root {
+  --board-light: #e8edd4;
+  --board-dark: #70894c;
+  --chart-fill: #355a08;
+}
+
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-50 antialiased;
+    @apply bg-canvas text-foreground antialiased;
+    background-image: radial-gradient(
+      ellipse at 74% 0%,
+      #1e2810,
+      transparent 31rem
+    );
+    min-height: 100dvh;
+    color-scheme: dark;
   }
 }
 
 @layer base {
   button:focus-visible,
   select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
   a:focus-visible {
-    @apply outline-2 outline-offset-2 outline-cyan-200;
+    @apply outline-2 outline-offset-2 outline-accent;
   }
 }
 
 @layer components {
   .panel {
-    @apply rounded-lg border border-slate-700 bg-slate-900 p-4;
+    @apply rounded-lg border border-line bg-surface p-4;
   }
 
   .control {
-    @apply min-h-10 rounded-md border border-slate-600 bg-slate-800 px-2 py-2 text-sm leading-tight hover:border-cyan-200 disabled:opacity-45;
+    @apply min-h-10 rounded-md border border-edge bg-raised px-2 py-2 text-sm leading-tight hover:border-accent disabled:opacity-45;
+  }
+
+  .control.primary-control {
+    min-height: 2.75rem;
+    border: 1px solid #dbffb4;
+    border-radius: 999px;
+    padding-inline: 1rem;
+    background: linear-gradient(
+      155deg,
+      #dcffab 0%,
+      var(--color-accent) 52%,
+      #8bd332 100%
+    );
+    box-shadow:
+      inset 0 1px 0 #ffffff80,
+      0 3px 0 #476c1b,
+      0 7px 20px #97ff1226;
+    color: #111705;
+    font-weight: 800;
+  }
+
+  .control.primary-control:enabled:hover {
+    border-color: #edffd8;
+    background: linear-gradient(155deg, #edffc8, #a7ff42 58%, #94e42f);
+    box-shadow:
+      inset 0 1px 0 #ffffff99,
+      0 3px 0 #4d7920,
+      0 7px 22px #97ff1240;
+  }
+
+  .control.primary-control:enabled:active {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 1px 0 #ffffff66,
+      0 1px 0 #476c1b;
   }
 }
 

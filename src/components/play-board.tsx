@@ -110,7 +110,7 @@ export function PlayBoard({
   return (
     <section
       aria-label={text.board}
-      className="min-w-0 overflow-hidden rounded-lg border border-slate-700"
+      className="min-w-0 overflow-hidden rounded-lg border border-line"
     >
       <Chessboard
         position={fen}
@@ -121,8 +121,8 @@ export function PlayBoard({
         }
         onPieceDrop={tryMove}
         onSquareClick={click}
-        customLightSquareStyle={{ backgroundColor: '#dce8d8' }}
-        customDarkSquareStyle={{ backgroundColor: '#56817b' }}
+        customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
+        customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
         customSquareStyles={styles}
         animationDuration={140}
         showPromotionDialog={false}
@@ -134,7 +134,7 @@ export function PlayBoard({
           event.preventDefault()
           setPromotion(null)
         }}
-        className="m-auto max-w-[calc(100%-2rem)] rounded-xl border border-slate-600 bg-slate-900 p-5 text-slate-50 backdrop:bg-slate-950/80"
+        className="m-auto max-w-[calc(100%-2rem)] rounded-xl border border-edge bg-surface p-5 text-foreground backdrop:bg-canvas/80"
       >
         <h2 id="promotion-title" className="font-semibold">
           {text.promotion}

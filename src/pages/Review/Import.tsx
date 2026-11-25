@@ -73,7 +73,7 @@ export function Import({ busy, cached, onRestore, onAnalyze }: Props) {
           <label className="block text-sm">
             {t.pgn}
             <textarea
-              className="mt-1 block w-full rounded-md border border-slate-600 bg-slate-950 p-3 font-mono"
+              className="mt-1 block w-full rounded-md border border-edge bg-canvas p-3 font-mono"
               value={input}
               rows={5}
               maxLength={maxPgnSize}
@@ -110,7 +110,7 @@ export function Import({ busy, cached, onRestore, onAnalyze }: Props) {
             <input
               type="file"
               accept=".pgn,application/x-chess-pgn"
-              className="mt-1 block max-w-full text-sm file:mr-2 file:rounded file:bg-slate-800 file:px-3 file:py-2"
+              className="mt-1 block max-w-full text-sm file:mr-2 file:rounded file:bg-raised file:px-3 file:py-2"
               onChange={(event) => {
                 const file = event.target.files?.[0]
                 if (file) void fileUpload(file)
@@ -199,13 +199,13 @@ export function Import({ busy, cached, onRestore, onAnalyze }: Props) {
                 </select>
               </label>
               <button
-                className="control bg-cyan-200 font-semibold text-slate-950"
+                className="control primary-control"
                 disabled={!games[selected]}
                 onClick={() => onAnalyze(games[selected], depth, multiPV)}
               >
                 {t.analyze}
               </button>
-              <p className="w-full text-sm text-slate-300">
+              <p className="w-full text-sm text-secondary">
                 {[
                   games[selected]?.headers.Date,
                   games[selected]?.headers.TimeControl,

@@ -325,7 +325,7 @@ export function Library({ session }: { session: Session }) {
                   <Line
                     dataKey="accuracy"
                     name="Accuracy"
-                    stroke="#67e8f9"
+                    stroke="var(--color-accent)"
                     isAnimationActive={false}
                   />
                 </LineChart>
@@ -413,7 +413,7 @@ export function Library({ session }: { session: Session }) {
         {!filtered.length && <p>{ready ? 'ไม่พบเกม' : 'กำลังโหลด…'}</p>}
         {filtered.map(({ row, review }) => (
           <div
-            className="flex flex-wrap items-center gap-2 border-t border-slate-700 pt-2"
+            className="flex flex-wrap items-center gap-2 border-t border-line pt-2"
             key={row.id}
           >
             <span className="grow break-words">

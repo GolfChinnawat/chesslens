@@ -105,6 +105,8 @@ export function RetryMove({
   return (
     <div className="space-y-2">
       <Chessboard
+        customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
+        customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
         id="retry-board"
         position={fen}
         boardOrientation={flipped ? 'black' : 'white'}
@@ -132,7 +134,7 @@ export function RetryMove({
       {controls &&
         createPortal(
           <div className="space-y-2">
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-secondary">
               {original && t.original(formatScore(original))}
             </p>
             <p role="status" className="text-sm">

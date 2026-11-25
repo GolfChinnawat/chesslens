@@ -75,6 +75,8 @@ export function Training({
     <div className="space-y-2">
       <div className="max-w-xs">
         <Chessboard
+          customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
+          customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
           position={card.fen}
           arePiecesDraggable={false}
           boardOrientation={board.turn() === 'w' ? 'white' : 'black'}

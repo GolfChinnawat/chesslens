@@ -94,9 +94,9 @@ export function PlayPage() {
 
   return (
     <main className="play-layout mx-auto max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-raised pb-3">
         <div>
-          <p className="text-sm font-semibold tracking-wide text-cyan-200">
+          <p className="text-sm font-semibold tracking-wide text-accent">
             ChessLens
           </p>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">
@@ -107,20 +107,20 @@ export function PlayPage() {
           {openingTrainerEnabled && (
             <a
               href="?view=opening"
-              className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+              className="text-sm text-accent underline-offset-4 hover:underline"
             >
               ฝึกเปิดเกม
             </a>
           )}
           <a
             href="?view=review"
-            className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+            className="text-sm text-accent underline-offset-4 hover:underline"
           >
             {text.review}
           </a>
           <a
             href="?view=smoke"
-            className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+            className="text-sm text-accent underline-offset-4 hover:underline"
           >
             {text.smoke}
           </a>
@@ -128,7 +128,7 @@ export function PlayPage() {
       </header>
       <div className="play-columns grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="play-board-column min-w-0">
-          <p className="mb-2 text-sm text-slate-300">
+          <p className="mb-2 text-sm text-secondary">
             {colorLabel(opponent(orientation))} ·{' '}
             {playerLabel(opponent(orientation))}
           </p>
@@ -144,13 +144,13 @@ export function PlayPage() {
               />
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-sm text-secondary">
             {colorLabel(orientation)} · {playerLabel(orientation)}
           </p>
         </div>
         <aside className="play-sidebar min-w-0 space-y-4">
           <section className="panel">
-            <p role="status" className="font-semibold text-cyan-200">
+            <p role="status" className="font-semibold text-accent">
               {status}
             </p>
             {bot.notice &&
@@ -166,7 +166,7 @@ export function PlayPage() {
               </button>
             )}
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <label className="text-sm text-slate-300">
+              <label className="text-sm text-secondary">
                 {text.color}
                 <select
                   className="control mt-1 w-full"
@@ -182,7 +182,7 @@ export function PlayPage() {
                   ))}
                 </select>
               </label>
-              <label className="text-sm text-slate-300">
+              <label className="text-sm text-secondary">
                 {text.level}
                 <select
                   className="control mt-1 w-full"
@@ -201,7 +201,7 @@ export function PlayPage() {
               </label>
             </div>
             <button
-              className="control mt-2 w-full bg-cyan-200 font-semibold text-slate-950 hover:bg-cyan-100"
+              className="control mt-2 w-full primary-control"
               onClick={start}
             >
               {text.newGame}
@@ -239,7 +239,7 @@ export function PlayPage() {
           <section className="panel">
             <h2 className="font-semibold">{text.moves}</h2>
             {history.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-400">{text.emptyMoves}</p>
+              <p className="mt-2 text-sm text-muted">{text.emptyMoves}</p>
             ) : (
               <>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -263,7 +263,7 @@ export function PlayPage() {
                 )}
                 <div className="mt-3 max-h-48 overflow-auto">
                   <table className="w-full table-fixed text-left text-sm">
-                    <thead className="text-slate-300">
+                    <thead className="text-secondary">
                       <tr>
                         <td className="w-9" />
                         <th scope="col">{text.white}</th>
@@ -272,10 +272,10 @@ export function PlayPage() {
                     </thead>
                     <tbody>
                       {moveRows(history).map(([number, row]) => (
-                        <tr key={number} className="odd:bg-slate-800/60">
+                        <tr key={number} className="odd:bg-raised/60">
                           <th
                             scope="row"
-                            className="pl-2 font-normal text-slate-400"
+                            className="pl-2 font-normal text-muted"
                           >
                             {number}.
                           </th>
@@ -285,7 +285,7 @@ export function PlayPage() {
                               <td key={color}>
                                 {move && (
                                   <button
-                                    className="w-full rounded px-2 py-2 text-left font-mono aria-current:bg-cyan-200 aria-current:text-slate-950"
+                                    className="w-full rounded px-2 py-2 text-left font-mono aria-current:bg-accent aria-current:text-canvas"
                                     aria-current={move === lastMove}
                                     onClick={() =>
                                       state.goTo(history.indexOf(move) + 1)
@@ -304,20 +304,20 @@ export function PlayPage() {
                 </div>
               </>
             )}
-            <h3 className="mt-4 border-t border-slate-700 pt-3 text-sm font-semibold">
+            <h3 className="mt-4 border-t border-line pt-3 text-sm font-semibold">
               {text.captured}
             </h3>
             {(['w', 'b'] as const).map((color) => (
-              <p key={color} className="mt-1 text-sm text-slate-300">
+              <p key={color} className="mt-1 text-sm text-secondary">
                 {colorLabel(color)}{' '}
-                <span className="ml-1 text-base text-slate-50">
+                <span className="ml-1 text-base text-foreground">
                   {captures[color]
                     .map((piece) => glyphs[opponent(color)][piece])
                     .join(' ') || text.none}
                 </span>
               </p>
             ))}
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-secondary">
               {balance
                 ? text.ahead(
                     colorLabel(balance > 0 ? 'w' : 'b'),
@@ -334,7 +334,7 @@ export function PlayPage() {
               </button>
             </div>
             {feedback?.game === game && (
-              <p role="status" className="mt-2 text-sm text-cyan-200">
+              <p role="status" className="mt-2 text-sm text-accent">
                 {feedback.message}
               </p>
             )}

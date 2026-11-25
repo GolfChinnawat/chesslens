@@ -133,7 +133,7 @@ export function PublicImport({
           />
         </label>
         <button
-          className="control bg-cyan-200 font-semibold text-slate-950"
+          className="control primary-control"
           type="submit"
         >
           ค้นหาเกม

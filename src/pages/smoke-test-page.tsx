@@ -34,28 +34,28 @@ export function SmokeTestPage() {
       <section className="w-full" aria-labelledby="page-title">
         <a
           href="./"
-          className="mb-4 block text-sm text-cyan-200 underline-offset-4 hover:underline"
+          className="mb-4 block text-sm text-accent underline-offset-4 hover:underline"
         >
           {messages.play}
         </a>
-        <p className="mb-5 text-lg font-semibold tracking-tight text-cyan-200">
+        <p className="mb-5 text-lg font-semibold tracking-tight text-accent">
           ChessLens
         </p>
         <h1 id="page-title" className="text-3xl font-semibold sm:text-5xl">
           {messages.title}
         </h1>
-        <p className="mt-4 max-w-lg leading-relaxed text-slate-300">
+        <p className="mt-4 max-w-lg leading-relaxed text-secondary">
           {messages.description}
         </p>
-        <div className="mt-8 rounded-xl border border-slate-700 bg-slate-900 p-5 sm:p-7">
-          <p className="text-sm text-slate-300">
+        <div className="mt-8 rounded-xl border border-line bg-surface p-5 sm:p-7">
+          <p className="text-sm text-secondary">
             {messages.depth}{' '}
             <span className="font-mono text-white">{smokeDepth}</span>
           </p>
           <div role="status" className="mt-4 min-h-16">
             <p>{messages[result.status]}</p>
             {result.status === 'success' && (
-              <code className="mt-2 block break-words text-cyan-200">
+              <code className="mt-2 block break-words text-accent">
                 {result.move}
               </code>
             )}
@@ -67,7 +67,7 @@ export function SmokeTestPage() {
             type="button"
             disabled={result.status === 'running'}
             onClick={run}
-            className="mt-4 min-h-11 w-full rounded-lg bg-cyan-200 px-5 py-2 font-semibold text-slate-950 hover:bg-cyan-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200 disabled:opacity-60 sm:w-auto"
+            className="control primary-control mt-4 w-full sm:w-auto"
           >
             {result.status === 'success' || result.status === 'error'
               ? messages.rerun

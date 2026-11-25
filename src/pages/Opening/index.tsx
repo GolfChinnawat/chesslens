@@ -226,7 +226,7 @@ export default function OpeningPage() {
                   >
                     <p role="status">{feedback.text}</p>
                     <button
-                      className="control opening-primary"
+                      className="control primary-control"
                       onClick={() => {
                         setFeedback(undefined)
                         setMessage('')
@@ -254,7 +254,7 @@ export default function OpeningPage() {
                         required
                       />
                     </label>
-                    <button className="control opening-primary">ตอบ</button>
+                    <button className="control primary-control">ตอบ</button>
                   </form>
                 ) : (
                   <div className="opening-result">
@@ -345,7 +345,7 @@ export default function OpeningPage() {
                 </select>
               </label>
               <button
-                className="control opening-primary"
+                className="control primary-control"
                 disabled={!pgn.trim()}
               >
                 สร้างชุดฝึก
