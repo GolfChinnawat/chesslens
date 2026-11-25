@@ -9,6 +9,7 @@ import {
 } from '../../analysis/opening-trainer'
 import { PlayBoard } from '../../components/play-board'
 import { localReviews } from '../../store/review-cache'
+import './opening.css'
 
 const storageKey = 'chesslens-opening-trainer-v1'
 const cardKey = (line: OpeningLine, index: number) => line.id + ':' + index
@@ -38,7 +39,11 @@ export default function OpeningPage() {
   const [side, setSide] = useState(data.side)
   const [selected, setSelected] = useState('')
   const [message, setMessage] = useState('')
-  const [feedback, setFeedback] = useState<{ text: string; fen: string }>()
+  const [feedback, setFeedback] = useState<{
+    text: string
+    fen: string
+    correct: boolean
+  }>()
   const [now, setNow] = useState(Date.now)
   const [reviews] = useState(localReviews)
   const lines = useMemo(() => {
@@ -54,11 +59,10 @@ export default function OpeningPage() {
       (_, i) => (data.progress[cardKey(line, i)]?.due ?? 0) <= now,
     ) ?? -1
   const position = line?.positions[index]
-  const boardFen = feedback?.fen ?? position?.fen
-  const game = useMemo(
-    () => (boardFen ? new Chess(boardFen) : undefined),
-    [boardFen],
-  )
+  const ready = !!position || !!feedback
+  const boardFen = feedback?.fen ?? position?.fen ?? line?.positions.at(-1)?.fen
+  const orientation = line ? data.side : side
+  const game = useMemo(() => new Chess(boardFen), [boardFen])
   const totals = line?.positions.reduce(
     (total, _, i) => {
       const progress = data.progress[cardKey(line, i)]
@@ -88,6 +92,7 @@ export default function OpeningPage() {
         setMessage('ไม่พบตาของฝ่ายที่เลือกจากตำแหน่งเริ่มเกมมาตรฐาน')
         return
       }
+      setNow(Date.now())
       setSelected('')
       setFeedback(undefined)
       if (save({ ...data, pgn: text, side }))
@@ -104,6 +109,7 @@ export default function OpeningPage() {
       const correct = played.lan === position.uci
       const key = cardKey(line, index)
       const at = Date.now()
+      setMessage('')
       save({
         ...data,
         progress: {
@@ -114,6 +120,7 @@ export default function OpeningPage() {
       const solution = new Chess(position.fen).move(position.san)
       setFeedback({
         fen: solution.after,
+        correct,
         text: correct
           ? 'ถูกต้อง · ' + position.san
           : 'ตาในไลน์นี้คือ ' + position.san + ' · ฝึกซ้ำได้ใน 10 นาที',
@@ -129,184 +136,243 @@ export default function OpeningPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">ฝึกเปิดเกม</h1>
-        <nav className="flex flex-wrap gap-3 text-cyan-200">
+    <main className="opening">
+      <header className="opening-header">
+        <a className="opening-brand" href="./">
+          ChessLens
+        </a>
+        <nav aria-label="เมนูหลัก">
           <a href="./">เล่นกับบอท</a>
           <a href="?view=review">รีวิวเกม</a>
+          <a href="?view=opening" aria-current="page">
+            ฝึกเปิดเกม
+          </a>
           <a href="?view=account">บัญชี</a>
         </nav>
       </header>
-      <form
-        className="panel space-y-3"
-        onSubmit={(event) => {
-          event.preventDefault()
-          load(pgn)
-        }}
-      >
-        <label className="block">
-          PGN สำหรับฝึก (สูงสุด 8 ตาต่อฝ่าย)
-          <textarea
-            className="control mt-1 block w-full"
-            rows={4}
-            value={pgn}
-            maxLength={maxOpeningPgnSize}
-            onChange={(event) => setPgn(event.target.value)}
-          />
-        </label>
-        <label className="block">
-          เปิดไฟล์ PGN{' '}
-          <input
-            type="file"
-            accept=".pgn"
-            onChange={async (event) => {
-              const file = event.target.files?.[0]
-              event.target.value = ''
-              if (!file) return
-              if (file.size > maxOpeningPgnSize) {
-                setMessage('ไฟล์ต้องไม่เกิน 500 KB')
-                return
-              }
-              try {
-                setPgn(await file.text())
-              } catch {
-                setMessage('เปิดไฟล์ PGN ไม่สำเร็จ')
-              }
-            }}
-          />
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
-          <label>
-            ฝ่ายที่ฝึก{' '}
-            <select
-              className="control"
-              value={side}
-              onChange={(event) =>
-                setSide(event.target.value === 'b' ? 'b' : 'w')
-              }
-            >
-              <option value="w">ขาว</option>
-              <option value="b">ดำ</option>
-            </select>
-          </label>
-          <button className="control" disabled={!pgn.trim()}>
-            สร้างชุดฝึก
-          </button>
-          {!!reviews.length && (
-            <button
-              type="button"
-              className="control"
-              onClick={() => {
-                const imported = [
-                  ...new Set(reviews.map((review) => review.game.pgn)),
-                ].join('\n\n')
-                if (imported.length > maxOpeningPgnSize) {
-                  setMessage('PGN รวมเกิน 500 KB ลองนำเข้าทีละไฟล์')
-                  return
-                }
-                setPgn(imported)
-                load(imported)
+
+      <div className="opening-intro">
+        <h1>ฝึกเปิดเกม</h1>
+        <p>ซ้อมไลน์จากเกมของคุณ แล้วกลับมาทบทวนตาที่ถึงกำหนด</p>
+      </div>
+
+      <div className="opening-workspace" data-training={!!line}>
+        <section className="opening-board" aria-label="กระดานฝึกเปิดเกม">
+          <div className="opening-board-frame">
+            <PlayBoard
+              game={game}
+              fen={game.fen()}
+              orientation={orientation}
+              canMove={ready && !feedback}
+              play={({ from, to, promotion }) => {
+                answer(from + to + (promotion ?? ''))
+                return false
               }}
+            />
+          </div>
+        </section>
+
+        <aside className="opening-sidebar">
+          {line && (
+            <section
+              className="opening-card"
+              aria-labelledby="opening-practice"
             >
-              ใช้เกมที่เคยรีวิวในเครื่อง
-            </button>
+              <div className="opening-card-heading">
+                <h2 id="opening-practice">ชุดฝึกของคุณ</h2>
+                <span className="opening-side">
+                  ฝ่าย{data.side === 'w' ? 'ขาว' : 'ดำ'}
+                </span>
+              </div>
+              <label className="opening-field">
+                ไลน์ที่ฝึก
+                <select
+                  className="control"
+                  value={line.id}
+                  onChange={(event) => {
+                    setSelected(event.target.value)
+                    setFeedback(undefined)
+                    setMessage('')
+                    setNow(Date.now())
+                  }}
+                >
+                  {lines.map((entry, i) => (
+                    <option key={entry.id} value={entry.id}>
+                      ไลน์ {i + 1}
+                      {entry.label && ' · ' + entry.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {totals && (
+                <p className="opening-accuracy">
+                  ความแม่นยำของไลน์{' '}
+                  <strong>
+                    {totals.attempts
+                      ? Math.round((100 * totals.correct) / totals.attempts) +
+                        '%'
+                      : '—'}
+                  </strong>{' '}
+                  <span>
+                    ({totals.correct}/{totals.attempts})
+                  </span>
+                </p>
+              )}
+              <div className="opening-answer">
+                {feedback ? (
+                  <div
+                    className="opening-result"
+                    data-correct={feedback.correct}
+                  >
+                    <p role="status">{feedback.text}</p>
+                    <button
+                      className="control opening-primary"
+                      onClick={() => {
+                        setFeedback(undefined)
+                        setMessage('')
+                        setNow(Date.now())
+                      }}
+                    >
+                      ตาถัดไป
+                    </button>
+                  </div>
+                ) : ready ? (
+                  <form
+                    key={cardKey(line, index)}
+                    className="opening-move"
+                    onSubmit={submit}
+                  >
+                    <p>เดินบนกระดานหรือพิมพ์ตาที่ต้องการ</p>
+                    <label className="opening-field">
+                      ตาที่เดิน
+                      <input
+                        name="move"
+                        className="control"
+                        placeholder="เช่น Nf3"
+                        maxLength={12}
+                        autoComplete="off"
+                        required
+                      />
+                    </label>
+                    <button className="control opening-primary">ตอบ</button>
+                  </form>
+                ) : (
+                  <div className="opening-result">
+                    <p>ไลน์นี้ไม่มีตาที่ถึงกำหนดฝึกแล้ว</p>
+                    <button
+                      className="control"
+                      onClick={() => setNow(Date.now())}
+                    >
+                      ตรวจรอบฝึกอีกครั้ง
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
           )}
-        </div>
-      </form>
-      {message && <p role="status">{message}</p>}
-      {line && (
-        <section className="panel space-y-3">
-          <label>
-            ไลน์ที่ฝึก{' '}
-            <select
-              className="control max-w-full"
-              value={line.id}
-              onChange={(event) => {
-                setSelected(event.target.value)
-                setFeedback(undefined)
-                setNow(Date.now())
-              }}
-            >
-              {lines.map((entry, i) => (
-                <option key={entry.id} value={entry.id}>
-                  ไลน์ {i + 1}
-                  {entry.label && ' · ' + entry.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {totals && (
-            <p>
-              ความแม่นยำของไลน์{' '}
-              {totals.attempts
-                ? Math.round((100 * totals.correct) / totals.attempts) + '%'
-                : '—'}{' '}
-              ({totals.correct}/{totals.attempts})
+
+          {message && (
+            <p className="opening-notice" role="status">
+              {message}
             </p>
           )}
-          {game && boardFen ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="w-full max-w-sm">
-                <PlayBoard
-                  game={game}
-                  fen={boardFen}
-                  orientation={data.side}
-                  canMove={!feedback}
-                  play={({ from, to, promotion }) => {
-                    answer(from + to + (promotion ?? ''))
-                    return false
-                  }}
-                />
-              </div>
-              {feedback ? (
-                <div className="space-y-2">
-                  <p role="status">{feedback.text}</p>
-                  <button
-                    className="control"
-                    onClick={() => {
-                      setFeedback(undefined)
-                      setMessage('')
-                      setNow(Date.now())
-                    }}
-                  >
-                    ตาถัดไป
-                  </button>
-                </div>
-              ) : (
-                <form
-                  key={cardKey(line, index)}
-                  className="space-y-2"
-                  onSubmit={submit}
-                >
-                  <p>
-                    ตาของฝ่าย{data.side === 'w' ? 'ขาว' : 'ดำ'} ·
-                    ควรเดินอะไรในไลน์นี้?
-                  </p>
-                  <label className="block">
-                    ตาที่เดิน{' '}
-                    <input
-                      name="move"
-                      className="control w-full"
-                      placeholder="Nf3"
-                      maxLength={12}
-                      required
-                    />
-                  </label>
-                  <button className="control">ตอบ</button>
-                </form>
-              )}
+
+          <form
+            className="opening-card opening-import"
+            onSubmit={(event) => {
+              event.preventDefault()
+              load(pgn)
+            }}
+          >
+            <div className="opening-card-heading">
+              <h2>{line ? 'เปลี่ยนชุดฝึก' : 'สร้างชุดฝึก'}</h2>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <p>ไลน์นี้ไม่มีตาที่ถึงกำหนดฝึกแล้ว</p>
-              <button className="control" onClick={() => setNow(Date.now())}>
-                ตรวจรอบฝึกอีกครั้ง
+            <label className="opening-field">
+              PGN สำหรับฝึก
+              <textarea
+                className="control"
+                rows={4}
+                value={pgn}
+                maxLength={maxOpeningPgnSize}
+                placeholder="1. e4 e5 2. Nf3 Nc6 *"
+                onChange={(event) => setPgn(event.target.value)}
+              />
+            </label>
+            <p className="opening-hint">ใช้ 8 ตาแรกต่อฝ่าย · ไฟล์ไม่เกิน 500 KB</p>
+            <label className="opening-file">
+              <input
+                type="file"
+                accept=".pgn"
+                aria-label="เปิดไฟล์ PGN"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (!file) return
+                  if (file.size > maxOpeningPgnSize) {
+                    setMessage('ไฟล์ต้องไม่เกิน 500 KB')
+                    return
+                  }
+                  try {
+                    setPgn(await file.text())
+                    setMessage('เลือกไฟล์แล้ว กดสร้างชุดฝึกเพื่อเริ่ม')
+                  } catch {
+                    setMessage('เปิดไฟล์ PGN ไม่สำเร็จ')
+                  }
+                }}
+              />
+            </label>
+            {!line && !pgn && (
+              <button
+                type="button"
+                className="opening-link"
+                onClick={() => setPgn('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 *')}
+              >
+                ใช้ PGN ตัวอย่าง
+              </button>
+            )}
+            <div className="opening-import-actions">
+              <label className="opening-field">
+                ฝ่ายที่ฝึก
+                <select
+                  className="control"
+                  value={side}
+                  onChange={(event) =>
+                    setSide(event.target.value === 'b' ? 'b' : 'w')
+                  }
+                >
+                  <option value="w">ขาว</option>
+                  <option value="b">ดำ</option>
+                </select>
+              </label>
+              <button
+                className="control opening-primary"
+                disabled={!pgn.trim()}
+              >
+                สร้างชุดฝึก
               </button>
             </div>
-          )}
-        </section>
-      )}
+            {!!reviews.length && (
+              <button
+                type="button"
+                className="control"
+                onClick={() => {
+                  const imported = [
+                    ...new Set(reviews.map((review) => review.game.pgn)),
+                  ].join('\n\n')
+                  if (imported.length > maxOpeningPgnSize) {
+                    setMessage('PGN รวมเกิน 500 KB ลองนำเข้าทีละไฟล์')
+                    return
+                  }
+                  setPgn(imported)
+                  load(imported)
+                }}
+              >
+                ใช้เกมที่เคยรีวิวในเครื่อง
+              </button>
+            )}
+          </form>
+        </aside>
+      </div>
     </main>
   )
 }

@@ -1,0 +1,236 @@
+.opening {
+  --opening-muted: #a4bac8;
+  --opening-accent: #a5f3dc;
+  --opening-border: #294152;
+  --opening-surface: #102231;
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+  padding-block: 1rem 2.5rem;
+}
+
+.opening-header,
+.opening-header nav,
+.opening-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.opening-header {
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--opening-border);
+  padding-bottom: 0.85rem;
+}
+
+.opening-brand {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--opening-accent);
+}
+
+.opening-header nav {
+  justify-content: flex-start;
+  gap: 0.25rem 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.86rem;
+}
+
+.opening-header nav a {
+  color: var(--opening-muted);
+  padding: 0.42rem 0.6rem;
+  border-radius: 0.4rem;
+}
+
+.opening-header nav a:hover,
+.opening-header nav [aria-current='page'] {
+  background: #193647;
+  color: var(--opening-accent);
+}
+
+.opening-intro {
+  margin-block: 1.35rem 1.2rem;
+}
+
+.opening-intro h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.opening-intro p,
+.opening-hint,
+.opening-move p {
+  color: var(--opening-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.opening-intro p {
+  margin-top: 0.4rem;
+}
+
+.opening-workspace {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+.opening-board,
+.opening-sidebar {
+  min-width: 0;
+}
+
+.opening-board {
+  display: grid;
+  place-items: start center;
+  padding: clamp(0.45rem, 1.15vw, 0.85rem);
+  border: 1px solid var(--opening-border);
+  border-radius: 0.95rem;
+  background: #0d1c29;
+}
+
+.opening-board-frame {
+  width: min(100%, 39rem);
+  width: min(100%, clamp(22rem, 100dvh - 11rem, 39rem));
+  aspect-ratio: 1;
+}
+
+.opening-sidebar,
+.opening-card,
+.opening-move,
+.opening-result {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.opening-card {
+  border: 1px solid var(--opening-border);
+  border-radius: 0.85rem;
+  background: var(--opening-surface);
+  padding: 1rem;
+}
+
+.opening-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.opening-side {
+  flex-shrink: 0;
+  border-radius: 0.35rem;
+  background: #223d4c;
+  padding: 0.2rem 0.5rem;
+  color: #d9efef;
+  font-size: 0.8rem;
+}
+
+.opening-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  color: #d7e6ec;
+  font-size: 0.85rem;
+}
+
+.opening-field .control {
+  width: 100%;
+  min-width: 0;
+  background: #0a1926;
+}
+
+.opening-field textarea {
+  resize: vertical;
+  font-family: ui-monospace, monospace;
+}
+
+.opening-file input {
+  width: 100%;
+  color: var(--opening-muted);
+  font-size: 0.85rem;
+}
+
+.opening-file input::file-selector-button {
+  margin-inline-end: 0.65rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--opening-border);
+  border-radius: 0.35rem;
+  background: #163040;
+  color: #e0eef2;
+  cursor: pointer;
+}
+
+.opening-import-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.65fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.opening .opening-primary {
+  border-color: transparent;
+  background: var(--opening-accent);
+  color: #082920;
+  font-weight: 750;
+}
+
+.opening .opening-primary:enabled:hover {
+  background: #c7f9eb;
+}
+
+.opening-link {
+  justify-self: start;
+  color: var(--opening-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  font-size: 0.85rem;
+}
+
+.opening-accuracy {
+  color: #d7e6ec;
+  font-size: 0.86rem;
+}
+
+.opening-accuracy strong {
+  color: var(--opening-accent);
+  font-size: 1.1rem;
+}
+
+.opening-accuracy span {
+  color: var(--opening-muted);
+}
+
+.opening-answer {
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--opening-border);
+}
+
+.opening-result p,
+.opening-notice {
+  border-radius: 0.45rem;
+  background: #1b3647;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.opening-result[data-correct='true'] p {
+  color: var(--opening-accent);
+  background: #123c36;
+}
+
+.opening-result[data-correct='false'] p {
+  color: #ffdfa5;
+  background: #3b3024;
+}
+
+@media (min-width: 768px) {
+  .opening-workspace {
+    grid-template-columns: minmax(0, 1.7fr) minmax(17rem, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .opening-workspace[data-training='false'] .opening-sidebar {
+    grid-row: 1;
+  }
+}
