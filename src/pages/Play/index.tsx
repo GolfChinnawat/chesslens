@@ -1,3 +1,4 @@
+import { openingTrainerEnabled } from '../Opening/feature'
 import { useState } from 'react'
 import type { Color, Move, PieceSymbol } from 'chess.js'
 import { PlayBoard } from '../../components/play-board'
@@ -103,6 +104,14 @@ export function PlayPage() {
           </h1>
         </div>
         <nav className="flex flex-wrap gap-3">
+          {openingTrainerEnabled && (
+            <a
+              href="?view=opening"
+              className="text-sm text-cyan-200 underline-offset-4 hover:underline"
+            >
+              ฝึกเปิดเกม
+            </a>
+          )}
           <a
             href="?view=review"
             className="text-sm text-cyan-200 underline-offset-4 hover:underline"
