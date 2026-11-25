@@ -3,6 +3,10 @@ import { useMemo, useState, type FormEvent } from 'react'
 import {
   maxOpeningPgnSize,
   openingLines,
+  openingChoices,
+  openingAnswer,
+  openingPositionKey,
+  type OpeningMode,
   scheduleOpening,
   type OpeningLine,
   type OpeningProgress,
@@ -14,7 +18,12 @@ import './opening.css'
 const storageKey = 'chesslens-opening-trainer-v1'
 const cardKey = (line: OpeningLine, index: number) => line.id + ':' + index
 
-type TrainerData = { pgn: string; side: Color; progress: OpeningProgress }
+type TrainerData = {
+  pgn: string
+  side: Color
+  progress: OpeningProgress
+  mode?: OpeningMode
+}
 
 function loadTrainer(): TrainerData {
   try {
@@ -53,10 +62,22 @@ export default function OpeningPage() {
       return []
     }
   }, [data.pgn, data.side])
+  const mode: OpeningMode = data.mode === 'line' ? 'line' : 'repertoire'
+  const choices = useMemo(() => openingChoices(lines), [lines])
+
+  function progressKey(line: OpeningLine, index: number) {
+    const key = cardKey(line, index)
+    if (mode === 'line') return key
+    const moves = choices.get(openingPositionKey(line.positions[index].fen))
+    return (
+      'repertoire:' + key + ':' + [...(moves?.keys() ?? [])].sort().join(',')
+    )
+  }
+
   const line = lines.find(({ id }) => id === selected) ?? lines[0]
   const index =
     line?.positions.findIndex(
-      (_, i) => (data.progress[cardKey(line, i)]?.due ?? 0) <= now,
+      (_, i) => (data.progress[progressKey(line, i)]?.due ?? 0) <= now,
     ) ?? -1
   const position = line?.positions[index]
   const ready = !!position || !!feedback
@@ -65,7 +86,7 @@ export default function OpeningPage() {
   const game = useMemo(() => new Chess(boardFen), [boardFen])
   const totals = line?.positions.reduce(
     (total, _, i) => {
-      const progress = data.progress[cardKey(line, i)]
+      const progress = data.progress[progressKey(line, i)]
       return {
         attempts: total.attempts + (progress?.attempts ?? 0),
         correct: total.correct + (progress?.correct ?? 0),
@@ -105,9 +126,8 @@ export default function OpeningPage() {
   function answer(move: string) {
     if (!line || !position || !game || feedback) return
     try {
-      const played = new Chess(position.fen).move(move)
-      const correct = played.lan === position.uci
-      const key = cardKey(line, index)
+      const { played, correct } = openingAnswer(position, move, mode, choices)
+      const key = progressKey(line, index)
       const at = Date.now()
       setMessage('')
       save({
@@ -119,11 +139,17 @@ export default function OpeningPage() {
       })
       const solution = new Chess(position.fen).move(position.san)
       setFeedback({
-        fen: solution.after,
+        fen: correct ? played.after : solution.after,
         correct,
         text: correct
-          ? 'ถูกต้อง · ' + position.san
-          : 'ตาในไลน์นี้คือ ' + position.san + ' · ฝึกซ้ำได้ใน 10 นาที',
+          ? (played.lan === position.uci
+              ? 'ตรงไลน์ · '
+              : 'ใช้ได้ในอีกไลน์ของชุดฝึก · ') + played.san
+          : 'เดินได้ แต่นอก' +
+            (mode === 'line' ? 'ไลน์ที่เลือก' : 'ชุดฝึก') +
+            ' · ตาตัวอย่าง ' +
+            position.san +
+            ' · ทบทวนอีกครั้งใน 10 นาที',
       })
     } catch {
       setMessage('ลองใส่ตาที่เดินได้ เช่น Nf3 หรือ g1f3')
@@ -204,9 +230,33 @@ export default function OpeningPage() {
                   ))}
                 </select>
               </label>
+              <label className="opening-field">
+                โหมดฝึก
+                <select
+                  className="control"
+                  value={mode}
+                  onChange={(event) => {
+                    setFeedback(undefined)
+                    setMessage('')
+                    setNow(Date.now())
+                    save({
+                      ...data,
+                      mode:
+                        event.target.value === 'line' ? 'line' : 'repertoire',
+                    })
+                  }}
+                >
+                  <option value="repertoire">ยืดหยุ่น · รับทุกไลน์ที่นำเข้า</option>
+                  <option value="line">จำไลน์ · รับเฉพาะไลน์ที่เลือก</option>
+                </select>
+              </label>
+              <p className="opening-hint">
+                คะแนนวัดว่าตรงกับ{mode === 'line' ? 'ไลน์ที่เลือก' : 'ชุดฝึก'}{' '}
+                จากตำแหน่งเดียวกัน
+              </p>
               {totals && (
                 <p className="opening-accuracy">
-                  ความแม่นยำของไลน์{' '}
+                  ตอบตรงตามเกณฑ์{' '}
                   <strong>
                     {totals.attempts
                       ? Math.round((100 * totals.correct) / totals.attempts) +
@@ -238,7 +288,7 @@ export default function OpeningPage() {
                   </div>
                 ) : ready ? (
                   <form
-                    key={cardKey(line, index)}
+                    key={progressKey(line, index)}
                     className="opening-move"
                     onSubmit={submit}
                   >

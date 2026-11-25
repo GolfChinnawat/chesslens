@@ -1,6 +1,11 @@
 import { Chess } from 'chess.js'
 import { describe, expect, it } from 'vitest'
-import { openingLines, scheduleOpening } from '../src/analysis/opening-trainer'
+import {
+  openingAnswer,
+  openingChoices,
+  openingLines,
+  scheduleOpening,
+} from '../src/analysis/opening-trainer'
 
 const ruy = '[White "Alice"]\n[Black "Bob"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 *'
 const sicilian = '[White "Alice"]\n[Black "Carol"]\n\n1. e4 c5 2. Nf3 d6 *'
@@ -40,6 +45,21 @@ describe('opening trainer', () => {
     ])
     expect(openingLines('1. e4 *', 'b')).toEqual([])
     expect(() => openingLines('1. e9 *', 'w')).toThrow()
+  })
+
+  it('accepts repertoire alternatives only from matching positions', () => {
+    const lines = openingLines([ruy, sicilian, '1. d4 d5 *'].join('\n\n'), 'b')
+    const choices = openingChoices(lines)
+    const first = {
+      ...lines[0].positions[0],
+      fen: lines[0].positions[0].fen.replace(/ 0 1$/, ' 7 8'),
+    }
+    expect(openingAnswer(first, 'c5', 'repertoire', choices).correct).toBe(true)
+    expect(openingAnswer(first, 'c5', 'line', choices).correct).toBe(false)
+    expect(openingAnswer(first, 'd5', 'repertoire', choices).correct).toBe(
+      false,
+    )
+    expect(() => openingAnswer(first, 'e9', 'repertoire', choices)).toThrow()
   })
 
   it('schedules longer intervals for successive correct answers and retries misses', () => {

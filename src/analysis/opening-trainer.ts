@@ -12,6 +12,41 @@ export type OpeningLine = {
   positions: { fen: string; san: string; uci: string }[]
 }
 
+export type OpeningMode = 'repertoire' | 'line'
+type OpeningPosition = OpeningLine['positions'][number]
+
+export function openingPositionKey(fen: string) {
+  // Halfmove and fullmove counters do not affect opening move choices.
+  return fen.split(' ', 4).join(' ')
+}
+
+export function openingChoices(lines: OpeningLine[]) {
+  const choices = new Map<string, Map<string, string>>()
+  for (const { positions } of lines) {
+    for (const { fen, uci, san } of positions) {
+      const key = openingPositionKey(fen)
+      const moves = choices.get(key) ?? new Map<string, string>()
+      moves.set(uci, san)
+      choices.set(key, moves)
+    }
+  }
+  return choices
+}
+
+export function openingAnswer(
+  position: OpeningPosition,
+  move: string,
+  mode: OpeningMode,
+  choices: ReturnType<typeof openingChoices>,
+) {
+  const played = new Chess(position.fen).move(move)
+  const alternatives = choices.get(openingPositionKey(position.fen))
+  const correct =
+    played.lan === position.uci ||
+    (mode === 'repertoire' && alternatives?.has(played.lan) === true)
+  return { played, correct }
+}
+
 export type OpeningProgress = Record<
   string,
   { box: number; attempts: number; correct: number; due: number }
