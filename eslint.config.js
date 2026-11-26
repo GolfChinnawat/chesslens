@@ -7,6 +7,7 @@ export default tseslint.config(
   { ignores: ['dist/', 'public/stockfish/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  { files: ['src/pwa/sw.js'], languageOptions: { globals: globals.serviceworker } },
   { files: ['**/*.mjs'], languageOptions: { globals: globals.node } },
   {
     files: ['src/**/*.{ts,tsx}'],

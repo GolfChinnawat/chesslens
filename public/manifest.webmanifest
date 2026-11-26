@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "ChessLens",
+  "short_name": "ChessLens",
+  "lang": "th",
+  "description": "เล่นหมากรุกและรีวิวเกมด้วย Stockfish",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0d09",
+  "theme_color": "#0b0d09",
+  "icons": [
+    {
+      "src": "icons/chesslens-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/chesslens-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

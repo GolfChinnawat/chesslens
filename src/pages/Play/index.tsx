@@ -1,3 +1,4 @@
+import { AppInstallation } from '../../pwa/AppInstallation'
 import { puzzlesEnabled } from '../Puzzles/feature'
 import { openingTrainerEnabled } from '../Opening/feature'
 import { useState } from 'react'
@@ -151,6 +152,7 @@ export function PlayPage() {
           </p>
         </div>
         <aside className="play-sidebar min-w-0 space-y-4">
+          {import.meta.env.PROD && <AppInstallation />}
           <section className="panel">
             <p role="status" className="font-semibold text-accent">
               {status}
