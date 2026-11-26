@@ -85,7 +85,7 @@ export function AppInstallation() {
       </div>
       <p className="text-sm text-secondary" role="status">
         {ready
-          ? 'โหลดไฟล์แล้ว · เล่นได้แม้ไม่มีเน็ต'
+          ? 'พร้อมใช้งานออฟไลน์'
           : failed
             ? 'เตรียมออฟไลน์ไม่สำเร็จ ลองเปิดหน้านี้ใหม่'
             : 'กำลังเตรียมใช้งานออฟไลน์…'}
