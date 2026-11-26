@@ -1,3 +1,4 @@
+import { puzzlesEnabled } from '../Puzzles/feature'
 import { openingTrainerEnabled } from '../Opening/feature'
 import { useState } from 'react'
 import type { Color, Move, PieceSymbol } from 'chess.js'
@@ -124,6 +125,7 @@ export function PlayPage() {
           >
             {text.smoke}
           </a>
+          {puzzlesEnabled && <a href="?view=puzzles" className="text-sm text-accent">โจทย์หมากรุก</a>}
         </nav>
       </header>
       <div className="play-columns grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

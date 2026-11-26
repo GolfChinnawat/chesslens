@@ -38,8 +38,10 @@ const colors = ['#a3e635', '#38bdf8', '#fb923c', '#c4b5fd', '#f9a8d4']
 export function ReviewBoard({
   review,
   analyzing = false,
+  initialPly = 0,
 }: {
   review: GameReview
+  initialPly?: number
   analyzing?: boolean
 }) {
   const layout = useRef<HTMLDivElement>(null)
@@ -49,7 +51,7 @@ export function ReviewBoard({
   const [planning, setPlanning] = useState(false)
   const [practice, setPractice] = useState(false)
   const [auto, setAuto] = useState(false)
-  const [ply, setPly] = useState(0)
+  const [ply, setPly] = useState(initialPly)
   const [flipped, setFlipped] = useState(false)
   const [more, setMore] = useState(false)
   const [mode, setMode] = useState<'after' | 'before' | 'retry'>('after')

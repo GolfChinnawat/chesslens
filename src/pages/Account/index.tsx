@@ -1,3 +1,4 @@
+import { puzzlesEnabled } from '../Puzzles/feature'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { cloud } from '../../lib/cloud'
@@ -71,6 +72,7 @@ export default function AccountPage() {
         <nav className="flex gap-3 text-accent">
           <a href="./">เล่นกับบอท</a>
           <a href="?view=review">รีวิวเกม</a>
+          {puzzlesEnabled && <a href="?view=puzzles" className="text-accent">โจทย์หมากรุก</a>}
         </nav>
       </header>
       {!cloud ? (

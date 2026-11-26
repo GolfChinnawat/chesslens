@@ -1,3 +1,4 @@
+import { puzzlesEnabled } from '../Puzzles/feature'
 import { useEffect, useRef, useState } from 'react'
 import { analyzeGame } from '../../analysis/review'
 import { StockfishEngine } from '../../engine'
@@ -91,6 +92,7 @@ export default function ReviewPage() {
               {t.load}
             </button>
           )}
+          {puzzlesEnabled && <a href="?view=puzzles" className="text-sm text-accent">โจทย์หมากรุก</a>}
           {import.meta.env.VITE_SUPABASE_URL && (
             <a href="?view=account" className="text-sm text-accent">
               บัญชีและคลังเกม
