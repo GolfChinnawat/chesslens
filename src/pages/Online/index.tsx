@@ -1,0 +1,404 @@
+import { Chess } from 'chess.js'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { PlayBoard } from '../../components/play-board'
+import { cloud } from '../../lib/cloud'
+
+type Room = {
+  id: string
+  white_id: string
+  black_id: string | null
+  revision: number
+  turn_started_at: string | null
+  white_ms: number
+  black_ms: number
+  pgn: string
+  result: string | null
+  reason: string | null
+}
+
+const errors: Record<string, string> = {
+  room_unavailable: 'ห้องนี้เต็มแล้วหรือไม่พบห้อง',
+  room_changed: 'ห้องมีการอัปเดต กรุณาลองอีกครั้ง',
+  room_not_playing: 'เกมนี้ยังไม่เริ่มหรือจบแล้ว',
+  illegal_move: 'ตานี้เดินไม่ได้',
+  not_your_turn: 'ยังไม่ถึงตาของคุณ',
+  sign_in: 'กรุณาเข้าสู่ระบบใหม่',
+}
+const reasons: Record<string, string> = {
+  mate: 'รุกฆาต',
+  draw: 'เสมอ',
+  timeout: 'หมดเวลา',
+  resign: 'ยอมแพ้',
+}
+
+function clock(ms: number) {
+  const seconds = Math.ceil(Math.max(0, ms) / 1000)
+  return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0')
+}
+
+export default function OnlinePage() {
+  const [id, setId] = useState(
+    () => new URLSearchParams(location.search).get('room') ?? '',
+  )
+  const [user, setUser] = useState<string>()
+  const [checking, setChecking] = useState(true)
+  const [room, setRoom] = useState<Room>()
+  const [minutes, setMinutes] = useState(10)
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [online, setOnline] = useState(navigator.onLine)
+  const [now, setNow] = useState(Date.now)
+  const clockOffset = useRef(0)
+  const pending = useRef(false)
+  const flagged = useRef<number>()
+  const activeRoom = room?.id === id ? room : undefined
+  const pgn = activeRoom?.pgn ?? ''
+  const chess = useMemo(() => {
+    const game = new Chess()
+    if (pgn) game.loadPgn(pgn)
+    return game
+  }, [pgn])
+
+  useEffect(() => {
+    if (!cloud) {
+      setChecking(false)
+      return
+    }
+    const { data } = cloud.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user.id)
+      setRoom((current) =>
+        current &&
+        (current.white_id === session?.user.id ||
+          current.black_id === session?.user.id)
+          ? current
+          : undefined,
+      )
+      setChecking(false)
+    })
+    const connection = () => setOnline(navigator.onLine)
+    window.addEventListener('online', connection)
+    window.addEventListener('offline', connection)
+    return () => {
+      data.subscription.unsubscribe()
+      window.removeEventListener('online', connection)
+      window.removeEventListener('offline', connection)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (
+      !cloud ||
+      !id ||
+      !user ||
+      !online ||
+      !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)
+    )
+      return
+    const client = cloud
+    let live = true
+    const started = Date.now()
+    void client.rpc('online_clock').then(({ data }) => {
+      if (!live || typeof data !== 'string') return
+      const server = Date.parse(data)
+      if (Number.isFinite(server)) {
+        clockOffset.current = server - (started + Date.now()) / 2
+        setNow(Date.now())
+      }
+    })
+
+    async function refresh() {
+      const { data } = await client
+        .from('online_rooms')
+        .select()
+        .eq('id', id)
+        .maybeSingle()
+      if (live && data)
+        setRoom((current) =>
+          current?.id === id && current.revision > data.revision
+            ? current
+            : data,
+        )
+    }
+    const channel = client
+      .channel('online-room:' + id)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'online_rooms',
+          filter: 'id=eq.' + id,
+        },
+        () => void refresh(),
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') void refresh()
+      })
+    void refresh()
+    const fallback = window.setInterval(() => void refresh(), 10_000)
+    return () => {
+      live = false
+      window.clearInterval(fallback)
+      void client.removeChannel(channel)
+    }
+  }, [id, user, online])
+
+  const running = !!activeRoom?.turn_started_at && !activeRoom.result
+  useEffect(() => {
+    if (!running) return
+    const timer = window.setInterval(() => setNow(Date.now()), 250)
+    return () => window.clearInterval(timer)
+  }, [running])
+
+  async function send(action: string, move?: string) {
+    if (!cloud || pending.current || !navigator.onLine) return
+    pending.current = true
+    setBusy(true)
+    setMessage('')
+    try {
+      const { data, error } = await cloud.functions.invoke<{
+        room: Room
+        now: number
+      }>('chess-room', {
+        body: {
+          action,
+          move,
+          room: id,
+          minutes,
+          revision: activeRoom?.revision,
+        },
+      })
+      if (error || !data?.room) {
+        const payload =
+          error?.context instanceof Response
+            ? await error.context.json().catch(() => null)
+            : null
+        if (id) {
+          const refreshed = await cloud
+            .from('online_rooms')
+            .select()
+            .eq('id', id)
+            .maybeSingle()
+          if (refreshed.data)
+            setRoom((current) =>
+              current?.id === id && current.revision > refreshed.data.revision
+                ? current
+                : refreshed.data,
+            )
+        }
+        setMessage(errors[payload?.error as string] ?? 'ติดต่อห้องไม่ได้ ลองอีกครั้ง')
+        return
+      }
+      clockOffset.current = data.now - Date.now()
+      if (action !== 'timeout') flagged.current = undefined
+      setNow(Date.now())
+      const next = data.room
+      setRoom((current) =>
+        current?.id === next.id && current.revision > next.revision
+          ? current
+          : next,
+      )
+      setId(next.id)
+      const url = new URL(window.location.href)
+      url.searchParams.set('room', next.id)
+      window.history.replaceState(null, '', url)
+    } catch {
+      setMessage('ติดต่อห้องไม่ได้ ลองอีกครั้ง')
+    } finally {
+      setBusy(false)
+      pending.current = false
+    }
+  }
+
+  const side = activeRoom?.black_id === user ? 'b' : 'w'
+  const elapsed = running
+    ? Math.max(
+        0,
+        now + clockOffset.current - Date.parse(activeRoom!.turn_started_at!),
+      )
+    : 0
+  const white =
+    (activeRoom?.white_ms ?? 0) - (chess.turn() === 'w' ? elapsed : 0)
+  const black =
+    (activeRoom?.black_ms ?? 0) - (chess.turn() === 'b' ? elapsed : 0)
+  const expired = running && (white <= 0 || black <= 0)
+  const timeout = useRef<() => void>(() => {})
+  useEffect(() => {
+    timeout.current = () => void send('timeout')
+  })
+  useEffect(() => {
+    if (
+      expired &&
+      online &&
+      !busy &&
+      activeRoom &&
+      flagged.current !== activeRoom.revision
+    ) {
+      flagged.current = activeRoom.revision
+      timeout.current()
+    }
+  }, [activeRoom, busy, expired, online])
+
+  function review() {
+    try {
+      sessionStorage.setItem('chesslens.online-review', pgn)
+      location.href = '?view=review&online=1'
+    } catch {
+      setMessage('ส่งเกมเข้ารีวิวไม่ได้ กรุณาเปิดให้เบราว์เซอร์บันทึกข้อมูล')
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-8">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+        <h1 className="text-2xl font-bold">เล่นกับเพื่อน</h1>
+        <nav aria-label="เมนูหลัก" className="flex gap-3 text-sm text-accent">
+          <a href="./">เล่นกับบอท</a>
+          <a href="?view=account" target="_blank" rel="noopener noreferrer">
+            บัญชี ChessLens
+          </a>
+        </nav>
+      </header>
+      {!online && (
+        <p role="status" className="panel">
+          ออฟไลน์ · เมื่อกลับมาออนไลน์ ระบบจะโหลดห้องล่าสุด
+        </p>
+      )}
+      {message && (
+        <p role="status" className="panel">
+          {message}
+        </p>
+      )}
+      {checking ? (
+        <p role="status">กำลังตรวจบัญชี…</p>
+      ) : !user ? (
+        <p className="panel">
+          เข้าสู่ระบบผ่าน{' '}
+          <a
+            className="text-accent underline"
+            href="?view=account"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            บัญชี ChessLens
+          </a>{' '}
+          แล้วกลับมาที่แท็บนี้
+        </p>
+      ) : !activeRoom ? (
+        <section className="panel space-y-3">
+          <h2 className="font-semibold">
+            {id ? 'เข้าห้องที่ได้รับเชิญ' : 'สร้างห้องส่วนตัว'}
+          </h2>
+          {!id && (
+            <label className="block">
+              เวลาต่อฝ่าย{' '}
+              <select
+                className="control"
+                value={minutes}
+                onChange={(event) => setMinutes(Number(event.target.value))}
+              >
+                {[3, 5, 10, 15].map((n) => (
+                  <option key={n} value={n}>
+                    {n} นาที
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <button
+            className="control primary-control"
+            disabled={busy || !online}
+            onClick={() => void send(id ? 'join' : 'create')}
+          >
+            {id ? 'เข้าห้อง' : 'สร้างห้อง'}
+          </button>
+        </section>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <section className="panel w-full max-w-xl" aria-label="กระดานออนไลน์">
+            <PlayBoard
+              game={chess}
+              fen={chess.fen()}
+              orientation={side}
+              canMove={
+                online && running && !expired && !busy && chess.turn() === side
+              }
+              play={({ from, to, promotion }) => {
+                void send('move', from + to + (promotion ?? ''))
+                return false
+              }}
+            />
+          </section>
+          <section className="panel space-y-3">
+            <h2 className="font-semibold">
+              ห้องส่วนตัว · คุณเล่นฝ่าย{side === 'w' ? 'ขาว' : 'ดำ'}
+            </h2>
+            <div className="grid grid-cols-2 gap-2 font-mono tabular-nums">
+              <div className="rounded bg-raised p-2">
+                ขาว <span aria-label="เวลาฝ่ายขาว">{clock(white)}</span>
+              </div>
+              <div className="rounded bg-raised p-2">
+                ดำ <span aria-label="เวลาฝ่ายดำ">{clock(black)}</span>
+              </div>
+            </div>
+            <p role="status">
+              {activeRoom.result
+                ? activeRoom.result +
+                  ' · ' +
+                  (reasons[activeRoom.reason ?? ''] ?? 'จบเกม')
+                : !activeRoom.black_id
+                  ? 'รอเพื่อนเข้าห้อง'
+                  : expired
+                    ? 'รอยืนยันผลหมดเวลา'
+                    : chess.turn() === side
+                      ? 'ตาของคุณ'
+                      : 'รอคู่แข่งเดิน'}
+            </p>
+            {!activeRoom.black_id && (
+              <>
+                <button
+                  className="control primary-control"
+                  onClick={() =>
+                    void navigator.clipboard.writeText(location.href).then(
+                      () => setMessage('คัดลอกลิงก์แล้ว'),
+                      () => setMessage('คัดลอก URL จากแถบที่อยู่ของเบราว์เซอร์ได้เลย'),
+                    )
+                  }
+                >
+                  คัดลอกลิงก์เชิญ
+                </button>
+                <p className="text-sm text-secondary">
+                  ส่งลิงก์ให้เพื่อนที่มีบัญชี ChessLens คนแรกที่กดเข้าห้องจะได้ฝั่งดำ
+                </p>
+              </>
+            )}
+            {activeRoom.result ? (
+              <div className="flex flex-wrap gap-2">
+                {chess.history().length > 0 && (
+                  <button className="control primary-control" onClick={review}>
+                    รีวิวเกมนี้
+                  </button>
+                )}
+                <a href="?view=online" className="control">
+                  สร้างห้องใหม่
+                </a>
+              </div>
+            ) : (
+              running && (
+                <button
+                  className="control"
+                  disabled={busy || !online}
+                  onClick={() => {
+                    if (window.confirm('ยืนยันยอมแพ้เกมนี้?')) void send('resign')
+                  }}
+                >
+                  ยอมแพ้
+                </button>
+              )
+            )}
+          </section>
+        </div>
+      )}
+    </main>
+  )
+}

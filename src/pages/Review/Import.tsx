@@ -12,6 +12,7 @@ import {
 } from '../../types/review'
 
 type Props = {
+  initialPgn?: string
   busy: boolean
   cached: GameReview | null
   onRestore: () => void
@@ -20,8 +21,8 @@ type Props = {
 
 const maxPgnSize = 2 * 1024 * 1024
 
-export function Import({ busy, cached, onRestore, onAnalyze }: Props) {
-  const [input, setInput] = useState('')
+export function Import({ initialPgn = '', busy, cached, onRestore, onAnalyze }: Props) {
+  const [input, setInput] = useState(initialPgn)
   const [games, setGames] = useState<ImportedGame[]>([])
   const [selected, setSelected] = useState(0)
   const [depth, setDepth] = useState<ReviewDepth>(16)

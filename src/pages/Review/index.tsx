@@ -9,9 +9,17 @@ import { Import } from './Import'
 import { ReviewBoard } from './ReviewBoard'
 
 export default function ReviewPage() {
+  const [onlinePgn] = useState(() => {
+    if (!new URLSearchParams(window.location.search).has('online')) return ''
+    try {
+      return sessionStorage.getItem('chesslens.online-review') ?? ''
+    } catch {
+      return ''
+    }
+  })
   const [review, setReview] = useState<GameReview | null>(readReview)
   const [partial, setPartial] = useState<GameReview | null>(null)
-  const [opening, setOpening] = useState(() => !readReview())
+  const [opening, setOpening] = useState(() => !!onlinePgn || !readReview())
   const [progress, setProgress] = useState<{
     done: number
     total: number
@@ -108,6 +116,7 @@ export default function ReviewPage() {
       </header>
       {opening && !partial && (
         <Import
+          initialPgn={onlinePgn}
           busy={!!progress}
           cached={review}
           onRestore={() => {

@@ -1,3 +1,4 @@
+import { onlineEnabled } from '../Online/feature'
 import { AppInstallation } from '../../pwa/AppInstallation'
 import { puzzlesEnabled } from '../Puzzles/feature'
 import { openingTrainerEnabled } from '../Opening/feature'
@@ -127,6 +128,7 @@ export function PlayPage() {
             {text.smoke}
           </a>
           {puzzlesEnabled && <a href="?view=puzzles" className="text-sm text-accent">โจทย์หมากรุก</a>}
+          {onlineEnabled && <a href="?view=online" className="text-sm text-accent">เล่นกับเพื่อน</a>}
         </nav>
       </header>
       <div className="play-columns grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
