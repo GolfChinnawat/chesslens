@@ -455,6 +455,28 @@ export function ReviewBoard({
                 </p>
               </div>
             )}
+            {import.meta.env.VITE_MOVE_COACH !== 'false' && (
+              <details key={ply} className="mt-2 text-sm">
+                <summary className="control inline-block cursor-pointer font-semibold text-accent">
+                  อธิบายตานี้
+                </summary>
+                <div className="mt-2 space-y-2 text-secondary">
+                  {coaching ? (
+                    <>
+                      <p>{coaching.reason}</p>
+                      <p className="font-semibold text-foreground">{coaching.recommendation}</p>
+                      <p>{coaching.lesson}</p>
+                    </>
+                  ) : (
+                    <p>{planning || retrying
+                      ? 'กลับมาที่รีวิวเกมเพื่อดูคำอธิบาย'
+                      : missed
+                        ? 'คำอธิบายต้องใช้ผลวิเคราะห์ก่อนและหลังเดิน ลองวิเคราะห์เกมอีกครั้ง'
+                        : 'เลือกตาที่มีป้าย Inaccuracy, Mistake, Miss หรือ Blunder จากรายการเดิน'}</p>
+                  )}
+                </div>
+              </details>
+            )}
             {analyzing && current.move && !grade && (
               <p className="mt-2 text-sm text-secondary" role="status">
                 {labels.pendingGrade}
@@ -478,18 +500,6 @@ export function ReviewBoard({
           aria-label={labels.summary}
           tabIndex={fit ? 0 : undefined}
         >
-          {coaching && (
-            <details key={ply} className="panel text-sm">
-              <summary className="cursor-pointer font-semibold text-accent">
-                อธิบายตานี้
-              </summary>
-              <div className="mt-2 space-y-2 text-secondary">
-                <p>{coaching.reason}</p>
-                <p className="font-semibold text-foreground">{coaching.recommendation}</p>
-                <p>{coaching.lesson}</p>
-              </div>
-            </details>
-          )}
           <section className="panel">
             <h3 className="font-semibold">{t.graph}</h3>
             <p className="text-sm text-secondary">{t.eval}</p>
