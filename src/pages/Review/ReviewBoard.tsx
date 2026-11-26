@@ -3,6 +3,7 @@ import { useReviewSound } from './useReviewSound'
 import { PlanBoard } from './PlanBoard'
 import { DeepAnalysis } from './DeepAnalysis'
 import { Practice } from './Practice'
+import { explainMove } from '../../analysis/move-coach'
 import { reviewSummary } from '../../analysis/review-summary'
 import { findOpening } from '../../analysis/openings'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -73,6 +74,10 @@ export function ReviewBoard({
   const retrying = missed && mode === 'retry'
   const beforeMove = missed && mode !== 'after'
   const boardPly = beforeMove ? ply - 1 : ply
+  const coaching = import.meta.env.VITE_MOVE_COACH !== 'false' &&
+    missed && !retrying && !planning && grade
+      ? explainMove(review, ply, grade)
+      : undefined
   const triedMove = retrying && trial !== undefined
   const nextMiss = classification.grades.findIndex(
     (item, index) => index > ply && item && missedClasses.has(item.kind),
@@ -473,6 +478,18 @@ export function ReviewBoard({
           aria-label={labels.summary}
           tabIndex={fit ? 0 : undefined}
         >
+          {coaching && (
+            <details key={ply} className="panel text-sm">
+              <summary className="cursor-pointer font-semibold text-accent">
+                อธิบายตานี้
+              </summary>
+              <div className="mt-2 space-y-2 text-secondary">
+                <p>{coaching.reason}</p>
+                <p className="font-semibold text-foreground">{coaching.recommendation}</p>
+                <p>{coaching.lesson}</p>
+              </div>
+            </details>
+          )}
           <section className="panel">
             <h3 className="font-semibold">{t.graph}</h3>
             <p className="text-sm text-secondary">{t.eval}</p>
