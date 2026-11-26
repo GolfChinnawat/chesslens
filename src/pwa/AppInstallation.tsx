@@ -6,10 +6,24 @@ type InstallEvent = Event & {
 
 export function AppInstallation() {
   const [prompt, setPrompt] = useState<InstallEvent>()
+  const [online, setOnline] = useState(() => navigator.onLine)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const installed = window.matchMedia('(display-mode: standalone)').matches
+
+  useEffect(() => {
+    function updateConnection() {
+      setOnline(navigator.onLine)
+    }
+    window.addEventListener('online', updateConnection)
+    window.addEventListener('offline', updateConnection)
+    updateConnection()
+    return () => {
+      window.removeEventListener('online', updateConnection)
+      window.removeEventListener('offline', updateConnection)
+    }
+  }, [])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
@@ -66,13 +80,16 @@ export function AppInstallation() {
           </button>
         )}
         <span className="text-sm text-secondary" role="status">
-          {ready
-            ? 'พร้อมใช้งานออฟไลน์'
-            : failed
-              ? 'เตรียมออฟไลน์ไม่สำเร็จ ลองเปิดหน้านี้ใหม่'
-              : 'กำลังเตรียมใช้งานออฟไลน์…'}
+          การเชื่อมต่อ: {online ? 'ออนไลน์' : 'ออฟไลน์'}
         </span>
       </div>
+      <p className="text-sm text-secondary" role="status">
+        {ready
+          ? 'โหลดไฟล์แล้ว · เล่นได้แม้ไม่มีเน็ต'
+          : failed
+            ? 'เตรียมออฟไลน์ไม่สำเร็จ ลองเปิดหน้านี้ใหม่'
+            : 'กำลังเตรียมใช้งานออฟไลน์…'}
+      </p>
       {showHelp && (
         <p className="text-sm text-secondary">
           เลือกติดตั้งแอปจากเมนูเบราว์เซอร์ หรือบน iPhone เปิดด้วย Safari แล้วเลือกแชร์ →

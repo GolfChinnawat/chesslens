@@ -13,9 +13,14 @@ with sync_playwright() as playwright:
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.goto(url)
-    expect(page.get_by_text("พร้อมใช้งานออฟไลน์", exact=True)).to_be_visible(timeout=30000)
+    expect(page.get_by_text("การเชื่อมต่อ: ออนไลน์", exact=True)).to_be_visible()
+    expect(page.get_by_text("โหลดไฟล์แล้ว · เล่นได้แม้ไม่มีเน็ต", exact=True)).to_be_visible(timeout=30000)
     page.wait_for_function("!!navigator.serviceWorker.controller")
     expect(page.get_by_role("button", name="ติดตั้ง ChessLens")).to_be_visible()
+    expect(page.locator('meta[property="og:title"]')).to_have_attribute("content", page.title())
+    expect(page.locator('link[rel="canonical"]')).to_have_attribute(
+        "href", "https://golfchinnawat.github.io/chesslens/"
+    )
 
     page.get_by_role("link", name="รีวิวเกม", exact=True).click()
     page.get_by_label("วางข้อความ PGN").fill(
@@ -26,9 +31,13 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="เริ่มวิเคราะห์", exact=True).click()
     page.wait_for_function("!!localStorage.getItem('chesslens.review.v1.latest')")
 
-    context.set_offline(True)
+    expect(page.get_by_role("heading", name="Offline White — Offline Black")).to_be_visible()
     page.goto(url)
-    expect(page.get_by_text("พร้อมใช้งานออฟไลน์", exact=True)).to_be_visible()
+    context.set_offline(True)
+    expect(page.get_by_text("การเชื่อมต่อ: ออฟไลน์", exact=True)).to_be_visible()
+    page.goto(url)
+    expect(page.get_by_text("การเชื่อมต่อ: ออฟไลน์", exact=True)).to_be_visible()
+    expect(page.get_by_text("โหลดไฟล์แล้ว · เล่นได้แม้ไม่มีเน็ต", exact=True)).to_be_visible()
     page.get_by_label("สีของคุณ").select_option("white")
     page.get_by_label("ระดับบอท").select_option("1")
     page.get_by_role("button", name="เกมใหม่", exact=True).click()
