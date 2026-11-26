@@ -1,0 +1,44 @@
+name: แจ้งบั๊ก ChessLens
+description: แจ้งปัญหาที่พบตอนเล่น วิเคราะห์เกม หรือใช้คลังเกม
+title: "[บั๊ก] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        รายงานนี้เผยแพร่บน GitHub โปรดลบอีเมล รหัสผ่าน และข้อมูลส่วนตัวออกจากภาพหน้าจอหรือ PGN ก่อนส่ง
+  - type: dropdown
+    id: area
+    attributes:
+      label: พบปัญหาที่หน้าไหน
+      options:
+        - เล่นกับบอท
+        - รีวิวเกม
+        - ฝึกเปิดเกม
+        - โจทย์หมากรุก
+        - บัญชีและคลังเกม
+        - ติดตั้งหรือใช้งานออฟไลน์
+        - อื่น ๆ
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: ขั้นตอนที่ทำให้เกิดปัญหา
+      placeholder: |
+        1. เปิดหน้า…
+        2. กด…
+        3. พบว่า…
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: ผลที่พบและผลที่คาดหวัง
+      description: ใส่ข้อความแจ้งเตือนหรือแนบภาพหน้าจอที่ลบข้อมูลส่วนตัวแล้วได้
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: เบราว์เซอร์และอุปกรณ์
+      placeholder: เช่น Chrome บน Windows หรือ Safari บน iPhone

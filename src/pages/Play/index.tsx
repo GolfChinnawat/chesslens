@@ -343,6 +343,16 @@ export function PlayPage() {
               </p>
             )}
           </section>
+          <footer className="border-t border-line pt-3">
+            <a
+              href="https://github.com/GolfChinnawat/chesslens/issues/new?template=bug_report.yml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-accent underline-offset-4 hover:underline"
+            >
+              แจ้งบั๊กบน GitHub
+            </a>
+          </footer>
         </aside>
       </div>
     </main>
