@@ -20,11 +20,12 @@ export function explainMove(review: GameReview, ply: number, grade: MoveGrade) {
   const before = review.evaluations[ply - 1]
   const after = review.evaluations[ply]
   const best = before?.lines[0]?.moves[0]
-  if (!move || !best || !after?.score) return
+  if (!move || !after?.score) return
 
   const opponent = move.color === 'w' ? 'b' : 'w'
-  const recommendation =
-    best.uci === move.uci
+  const recommendation = !best
+    ? 'ผลวิเคราะห์นี้ไม่มีแนวแนะนำก่อนเดิน'
+    : best.uci === move.uci
       ? 'Stockfish แนะนำตานี้เช่นกัน'
       : 'Stockfish แนะนำ ' + best.san
   const reply = after.lines[0]?.moves[0]
@@ -36,7 +37,16 @@ export function explainMove(review: GameReview, ply: number, grade: MoveGrade) {
     '% จากมุมของฝ่ายที่เดิน'
   let lesson = 'ลองเทียบแนวที่เดินจริงกับแนวแนะนำ แล้วดูว่าคู่แข่งตอบอะไรได้บ้าง'
 
-  if (
+  if (grade.kind === 'forced') {
+    reason = 'ตำแหน่งนี้มีตาที่เดินถูกกติกาเพียงตาเดียว'
+    lesson = 'ดูว่าคิงมีช่องหนีหรือมีหมากตัวไหนช่วยแก้เช็กได้'
+  } else if (grade.kind === 'book') {
+    reason = move.san + ' ตรงกับแนวเปิดเกมในฐานข้อมูลของ ChessLens'
+    lesson = 'ลองดูว่าตานี้ช่วยพัฒนาหมากหรือคุมช่องไหน'
+  } else if (winningMate(after.score, move.color) && after.score.value === 0) {
+    reason = move.san + ' รุกฆาตและจบเกม'
+    lesson = 'ลองดูว่าหมากตัวไหนคุมช่องหนีของคิงคู่แข่ง'
+  } else if (
     winningMate(after.score, opponent) &&
     !winningMate(before.score, opponent)
   ) {

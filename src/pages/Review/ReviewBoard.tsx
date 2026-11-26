@@ -75,7 +75,7 @@ export function ReviewBoard({
   const beforeMove = missed && mode !== 'after'
   const boardPly = beforeMove ? ply - 1 : ply
   const coaching = import.meta.env.VITE_MOVE_COACH !== 'false' &&
-    missed && !retrying && !planning && grade
+    !retrying && !planning && grade
       ? explainMove(review, ply, grade)
       : undefined
   const triedMove = retrying && trial !== undefined
@@ -470,9 +470,11 @@ export function ReviewBoard({
                   ) : (
                     <p>{planning || retrying
                       ? 'กลับมาที่รีวิวเกมเพื่อดูคำอธิบาย'
-                      : missed
-                        ? 'คำอธิบายต้องใช้ผลวิเคราะห์ก่อนและหลังเดิน ลองวิเคราะห์เกมอีกครั้ง'
-                        : 'เลือกตาที่มีป้าย Inaccuracy, Mistake, Miss หรือ Blunder จากรายการเดิน'}</p>
+                      : !current.move
+                        ? 'เลือกตาใดก็ได้จากรายการเดินเพื่อดูคำอธิบาย'
+                        : analyzing
+                          ? 'รอ Stockfish วิเคราะห์ตานี้ให้เสร็จ'
+                          : 'ยังไม่มีผลวิเคราะห์พอสำหรับตานี้ ลองวิเคราะห์เกมอีกครั้ง'}</p>
                   )}
                 </div>
               </details>
