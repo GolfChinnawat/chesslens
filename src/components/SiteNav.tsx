@@ -27,7 +27,7 @@ const links = [
     page: 'account',
     href: '?view=account',
     label: 'บัญชี',
-    enabled: !!import.meta.env.VITE_SUPABASE_URL,
+    enabled: true,
   },
   {
     page: 'smoke',
@@ -43,30 +43,32 @@ export function SiteNav({
   current: (typeof links)[number]['page']
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line pb-3">
-      <a
-        href="./"
-        className="text-xl font-extrabold text-accent hover:underline"
-      >
-        ChessLens
-      </a>
-      <nav
-        aria-label="เมนูหลัก"
-        className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-2"
-      >
-        {links
-          .filter(({ enabled }) => enabled)
-          .map(({ page, href, label }) => (
-            <a
-              key={page}
-              href={href}
-              aria-current={page === current ? 'page' : undefined}
-              className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm text-muted hover:bg-raised hover:text-accent aria-current:bg-raised aria-current:font-semibold aria-current:text-accent"
-            >
-              {label}
-            </a>
-          ))}
-      </nav>
-    </div>
+    <header className="mx-auto w-full max-w-[79rem] px-4 pt-3 sm:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line pb-3">
+        <a
+          href="./"
+          className="text-xl font-extrabold text-accent hover:underline"
+        >
+          ChessLens
+        </a>
+        <nav
+          aria-label="เมนูหลัก"
+          className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-2"
+        >
+          {links
+            .filter(({ enabled }) => enabled)
+            .map(({ page, href, label }) => (
+              <a
+                key={page}
+                href={href}
+                aria-current={page === current ? 'page' : undefined}
+                className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold whitespace-nowrap text-muted hover:bg-raised hover:text-accent aria-current:bg-raised aria-current:text-accent"
+              >
+                {label}
+              </a>
+            ))}
+        </nav>
+      </div>
+    </header>
   )
 }

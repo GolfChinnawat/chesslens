@@ -1,4 +1,3 @@
-import { SiteNav } from '../../components/SiteNav'
 import { AppInstallation } from '../../pwa/AppInstallation'
 import { useState } from 'react'
 import type { Color, Move, PieceSymbol } from 'chess.js'
@@ -96,7 +95,6 @@ export function PlayPage() {
   return (
     <main className="play-layout mx-auto max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
       <header className="space-y-3 mb-4">
-        <SiteNav current="play" />
         <h1 className="text-2xl font-semibold sm:text-3xl">{text.title}</h1>
       </header>
       <div className="play-columns grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

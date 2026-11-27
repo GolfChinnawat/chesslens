@@ -1,4 +1,3 @@
-import { SiteNav } from '../components/SiteNav'
 import { useEffect, useRef, useState } from 'react'
 import { runSmokeTest, smokeDepth, SmokeTestError } from '../engine'
 import { messages } from '../i18n'
@@ -32,7 +31,6 @@ export function SmokeTestPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
-      <header className="mb-8"><SiteNav current="smoke" /></header>
       <section className="mx-auto w-full max-w-2xl" aria-labelledby="page-title">
         <h1 id="page-title" className="text-3xl font-semibold sm:text-5xl">
           {messages.title}

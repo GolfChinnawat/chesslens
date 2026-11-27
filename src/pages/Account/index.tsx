@@ -1,4 +1,3 @@
-import { SiteNav } from '../../components/SiteNav'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { cloud } from '../../lib/cloud'
@@ -68,7 +67,6 @@ export default function AccountPage() {
   return (
     <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
       <header className="space-y-3 mb-4">
-        <SiteNav current="account" />
         <h1 className="text-2xl font-semibold sm:text-3xl">บัญชี ChessLens</h1>
       </header>
       {!cloud ? (

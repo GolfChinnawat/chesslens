@@ -1,4 +1,3 @@
-import { SiteNav } from '../../components/SiteNav'
 import { Chess } from 'chess.js'
 import { lazy, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -132,7 +131,6 @@ export default function PuzzlesPage() {
   return (
     <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-8">
       <header className="space-y-3 mb-4">
-        <SiteNav current="puzzles" />
         <h1 className="text-2xl font-semibold sm:text-3xl">โจทย์จากเกมของคุณ</h1>
       </header>
       <section className="panel space-y-3">

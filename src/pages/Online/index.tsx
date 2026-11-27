@@ -1,4 +1,3 @@
-import { SiteNav } from '../../components/SiteNav'
 import { Chess } from 'chess.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PlayBoard } from '../../components/play-board'
@@ -357,7 +356,6 @@ export default function OnlinePage() {
   return (
     <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-8">
       <header className="space-y-3 mb-4">
-        <SiteNav current="online" />
         <h1 className="text-2xl font-semibold sm:text-3xl">เล่นกับเพื่อน</h1>
       </header>
       {!online && (

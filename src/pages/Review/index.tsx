@@ -1,4 +1,3 @@
-import { SiteNav } from '../../components/SiteNav'
 import { useEffect, useRef, useState } from 'react'
 import { analyzeGame } from '../../analysis/review'
 import { StockfishEngine } from '../../engine'
@@ -82,7 +81,6 @@ export default function ReviewPage() {
   return (
     <main className="mx-auto max-w-[79rem] px-4 py-4 sm:px-8 sm:py-6">
       <header className="space-y-3 mb-4">
-        <SiteNav current="review" />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-semibold sm:text-3xl">{t.title}</h1>
           {!opening && (

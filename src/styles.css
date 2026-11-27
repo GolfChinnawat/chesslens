@@ -88,16 +88,23 @@
 }
 
 @media (min-width: 1024px) {
-  html:has(.review-layout) {
+  html {
     scrollbar-gutter: stable;
   }
 }
 
 @media (min-width: 768px) and (min-height: 480px) {
-  .play-layout {
+  .site-shell:has(> .play-layout) {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     height: 100dvh;
+  }
+
+  .play-layout {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    min-height: 0;
   }
 
   .play-columns {
