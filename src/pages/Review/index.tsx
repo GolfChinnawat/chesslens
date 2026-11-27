@@ -1,4 +1,4 @@
-import { puzzlesEnabled } from '../Puzzles/feature'
+import { SiteNav } from '../../components/SiteNav'
 import { useEffect, useRef, useState } from 'react'
 import { analyzeGame } from '../../analysis/review'
 import { StockfishEngine } from '../../engine'
@@ -81,37 +81,16 @@ export default function ReviewPage() {
 
   return (
     <main className="mx-auto max-w-[79rem] px-4 py-4 sm:px-8 sm:py-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-raised pb-3">
-        <div>
-          <a href="./" className="block hover:underline text-sm font-semibold tracking-wide text-accent">
-            ChessLens
-          </a>
-          <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{t.title}</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
+      <header className="space-y-3 mb-4">
+        <SiteNav current="review" />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-semibold sm:text-3xl">{t.title}</h1>
           {!opening && (
-            <button
-              className="control"
-              onClick={() => {
-                setOpening(true)
-                setMessage('')
-              }}
-            >
-              {t.load}
-            </button>
+            <button className="control" onClick={() => {
+              setOpening(true)
+              setMessage('')
+            }}>{t.load}</button>
           )}
-          {puzzlesEnabled && <a href="?view=puzzles" className="text-sm text-accent">โจทย์หมากรุก</a>}
-          {import.meta.env.VITE_SUPABASE_URL && (
-            <a href="?view=account" className="text-sm text-accent">
-              บัญชีและคลังเกม
-            </a>
-          )}
-          <a
-            href="./"
-            className="text-sm text-accent underline-offset-4 hover:underline"
-          >
-            {t.play}
-          </a>
         </div>
       </header>
       {opening && !partial && (

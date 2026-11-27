@@ -1,7 +1,5 @@
-import { onlineEnabled } from '../Online/feature'
+import { SiteNav } from '../../components/SiteNav'
 import { AppInstallation } from '../../pwa/AppInstallation'
-import { puzzlesEnabled } from '../Puzzles/feature'
-import { openingTrainerEnabled } from '../Opening/feature'
 import { useState } from 'react'
 import type { Color, Move, PieceSymbol } from 'chess.js'
 import { PlayBoard } from '../../components/play-board'
@@ -97,39 +95,9 @@ export function PlayPage() {
 
   return (
     <main className="play-layout mx-auto max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-raised pb-3">
-        <div>
-          <a href="./" className="block hover:underline text-sm font-semibold tracking-wide text-accent">
-            ChessLens
-          </a>
-          <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">
-            {text.title}
-          </h1>
-        </div>
-        <nav className="flex flex-wrap gap-3">
-          {openingTrainerEnabled && (
-            <a
-              href="?view=opening"
-              className="text-sm text-accent underline-offset-4 hover:underline"
-            >
-              ฝึกเปิดเกม
-            </a>
-          )}
-          <a
-            href="?view=review"
-            className="text-sm text-accent underline-offset-4 hover:underline"
-          >
-            {text.review}
-          </a>
-          <a
-            href="?view=smoke"
-            className="text-sm text-accent underline-offset-4 hover:underline"
-          >
-            {text.smoke}
-          </a>
-          {puzzlesEnabled && <a href="?view=puzzles" className="text-sm text-accent">โจทย์หมากรุก</a>}
-          {onlineEnabled && <a href="?view=online" className="text-sm text-accent">เล่นกับเพื่อน</a>}
-        </nav>
+      <header className="space-y-3 mb-4">
+        <SiteNav current="play" />
+        <h1 className="text-2xl font-semibold sm:text-3xl">{text.title}</h1>
       </header>
       <div className="play-columns grid gap-5 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="play-board-column min-w-0">

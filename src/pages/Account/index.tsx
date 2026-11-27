@@ -1,4 +1,4 @@
-import { puzzlesEnabled } from '../Puzzles/feature'
+import { SiteNav } from '../../components/SiteNav'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { cloud } from '../../lib/cloud'
@@ -67,16 +67,9 @@ export default function AccountPage() {
   }
   return (
     <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <a href="./" className="block text-sm font-semibold text-accent hover:underline">ChessLens</a>
-          <h1 className="text-2xl font-semibold">บัญชี ChessLens</h1>
-        </div>
-        <nav className="flex gap-3 text-accent">
-          <a href="./">เล่นกับบอท</a>
-          <a href="?view=review">รีวิวเกม</a>
-          {puzzlesEnabled && <a href="?view=puzzles" className="text-accent">โจทย์หมากรุก</a>}
-        </nav>
+      <header className="space-y-3 mb-4">
+        <SiteNav current="account" />
+        <h1 className="text-2xl font-semibold sm:text-3xl">บัญชี ChessLens</h1>
       </header>
       {!cloud ? (
         <p className="panel">คลังเกมออนไลน์ยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์</p>

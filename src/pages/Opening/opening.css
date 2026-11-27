@@ -4,44 +4,11 @@
   padding-block: 1rem 2.5rem;
 }
 
-.opening-header,
-.opening-header nav,
 .opening-card-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-}
-
-.opening-header {
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--color-line);
-  padding-bottom: 0.85rem;
-}
-
-.opening-brand {
-  font-size: 1.12rem;
-  font-weight: 800;
-  color: var(--color-accent);
-}
-
-.opening-header nav {
-  justify-content: flex-start;
-  gap: 0.25rem 0.5rem;
-  flex-wrap: wrap;
-  font-size: 0.86rem;
-}
-
-.opening-header nav a {
-  color: var(--color-muted);
-  padding: 0.42rem 0.6rem;
-  border-radius: 0.4rem;
-}
-
-.opening-header nav a:hover,
-.opening-header nav [aria-current='page'] {
-  background: #222b15;
-  color: var(--color-accent);
 }
 
 .opening-intro {

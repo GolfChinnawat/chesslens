@@ -47,7 +47,7 @@ with sync_playwright() as p:
  page.get_by_role('button',name='เริ่มวิเคราะห์').click()
  page.get_by_role('button',name='บันทึกเข้าคลังเกม').click(timeout=30000)
  expect(page.get_by_text('บันทึกในคลังเกมแล้ว')).to_be_visible()
- page.get_by_role('link',name='บัญชีและคลังเกม').click()
+ page.get_by_role('navigation',name='เมนูหลัก').get_by_role('link',name='บัญชี',exact=True).click()
  expect(page.get_by_role('button',name='เปิดรีวิว')).to_be_visible()
  expect(page.get_by_text('ขาว ชนะ / เสมอ / แพ้:',exact=False)).to_contain_text('1 / 0 / 0')
  page.get_by_role('button',name='เปิดรีวิว').click()

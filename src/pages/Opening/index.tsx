@@ -1,3 +1,4 @@
+import { SiteNav } from '../../components/SiteNav'
 import { Chess, type Color } from 'chess.js'
 import { useMemo, useState, type FormEvent } from 'react'
 import {
@@ -163,18 +164,8 @@ export default function OpeningPage() {
 
   return (
     <main className="opening">
-      <header className="opening-header">
-        <a className="opening-brand" href="./">
-          ChessLens
-        </a>
-        <nav aria-label="เมนูหลัก">
-          <a href="./">เล่นกับบอท</a>
-          <a href="?view=review">รีวิวเกม</a>
-          <a href="?view=opening" aria-current="page">
-            ฝึกเปิดเกม
-          </a>
-          <a href="?view=account">บัญชี</a>
-        </nav>
+      <header className="space-y-3 mb-4">
+        <SiteNav current="opening" />
       </header>
 
       <div className="opening-intro">

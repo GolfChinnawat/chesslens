@@ -1,3 +1,4 @@
+import { SiteNav } from '../components/SiteNav'
 import { useEffect, useRef, useState } from 'react'
 import { runSmokeTest, smokeDepth, SmokeTestError } from '../engine'
 import { messages } from '../i18n'
@@ -30,17 +31,9 @@ export function SmokeTestPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl items-center px-5 py-12 sm:px-12">
-      <section className="w-full" aria-labelledby="page-title">
-        <a
-          href="./"
-          className="mb-4 block text-sm text-accent underline-offset-4 hover:underline"
-        >
-          {messages.play}
-        </a>
-        <a href="./" className="block hover:underline mb-5 text-lg font-semibold tracking-tight text-accent">
-          ChessLens
-        </a>
+    <main className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
+      <header className="mb-8"><SiteNav current="smoke" /></header>
+      <section className="mx-auto w-full max-w-2xl" aria-labelledby="page-title">
         <h1 id="page-title" className="text-3xl font-semibold sm:text-5xl">
           {messages.title}
         </h1>
