@@ -68,7 +68,10 @@ export default function AccountPage() {
   return (
     <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">บัญชี ChessLens</h1>
+        <div>
+          <a href="./" className="block text-sm font-semibold text-accent hover:underline">ChessLens</a>
+          <h1 className="text-2xl font-semibold">บัญชี ChessLens</h1>
+        </div>
         <nav className="flex gap-3 text-accent">
           <a href="./">เล่นกับบอท</a>
           <a href="?view=review">รีวิวเกม</a>

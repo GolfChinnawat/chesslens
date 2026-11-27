@@ -99,9 +99,9 @@ export function PlayPage() {
     <main className="play-layout mx-auto max-w-6xl px-4 py-4 sm:px-8 sm:py-6">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-raised pb-3">
         <div>
-          <p className="text-sm font-semibold tracking-wide text-accent">
+          <a href="./" className="block hover:underline text-sm font-semibold tracking-wide text-accent">
             ChessLens
-          </p>
+          </a>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">
             {text.title}
           </h1>

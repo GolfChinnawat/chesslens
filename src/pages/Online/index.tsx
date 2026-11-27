@@ -356,7 +356,10 @@ export default function OnlinePage() {
   return (
     <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-8">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
-        <h1 className="text-2xl font-bold">เล่นกับเพื่อน</h1>
+        <div>
+          <a href="./" className="block text-sm font-semibold text-accent hover:underline">ChessLens</a>
+          <h1 className="text-2xl font-bold">เล่นกับเพื่อน</h1>
+        </div>
         <nav aria-label="เมนูหลัก" className="flex gap-3 text-sm text-accent">
           <a href="./">เล่นกับบอท</a>
           <a href="?view=account" target="_blank" rel="noopener noreferrer">

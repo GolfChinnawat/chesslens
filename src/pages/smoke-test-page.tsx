@@ -38,9 +38,9 @@ export function SmokeTestPage() {
         >
           {messages.play}
         </a>
-        <p className="mb-5 text-lg font-semibold tracking-tight text-accent">
+        <a href="./" className="block hover:underline mb-5 text-lg font-semibold tracking-tight text-accent">
           ChessLens
-        </p>
+        </a>
         <h1 id="page-title" className="text-3xl font-semibold sm:text-5xl">
           {messages.title}
         </h1>
