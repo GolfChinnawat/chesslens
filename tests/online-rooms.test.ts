@@ -99,6 +99,27 @@ it('isolates live room reads, rejects client writes and admits a single join', a
         )
       ).affectedRows,
     ).toBe(0)
+    await db.exec('reset role')
+    await db.exec(
+      readFileSync(
+        new URL(
+          '../supabase/migrations/20261127190902_online_room_codes.sql',
+          import.meta.url,
+        ),
+        'utf8',
+      ),
+    )
+    const existing = await db.query<{ room_code: string }>(
+      'select room_code from online_rooms where id=$1',
+      [waiting.id],
+    )
+    expect(existing.rows[0].room_code).toMatch(/^[0-9A-F]{10}$/)
+    await expect(
+      db.query(
+        'insert into online_rooms(white_id, white_ms, black_ms, room_code) values ($1, 180000, 180000, $2)',
+        [white, existing.rows[0].room_code],
+      ),
+    ).rejects.toThrow()
     await db.exec('reset role; set role authenticated')
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [
       outsider,

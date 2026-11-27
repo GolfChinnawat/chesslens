@@ -5,6 +5,7 @@ import { cloud } from '../../lib/cloud'
 
 type Room = {
   id: string
+  room_code: string
   white_id: string
   black_id: string | null
   revision: number
@@ -17,6 +18,7 @@ type Room = {
 }
 
 const errors: Record<string, string> = {
+  invalid_code: 'รหัสห้องต้องมี 10 ตัว',
   room_unavailable: 'ห้องนี้เต็มแล้วหรือไม่พบห้อง',
   room_changed: 'ห้องมีการอัปเดต กรุณาลองอีกครั้ง',
   room_not_playing: 'เกมนี้ยังไม่เริ่มหรือจบแล้ว',
@@ -40,6 +42,8 @@ export default function OnlinePage() {
   const [id, setId] = useState(
     () => new URLSearchParams(location.search).get('room') ?? '',
   )
+  const [code, setCode] = useState('')
+  const normalizedCode = code.replace(/[\s-]/g, '').toUpperCase()
   const [user, setUser] = useState<string>()
   const [checking, setChecking] = useState(true)
   const [room, setRoom] = useState<Room>()
@@ -164,6 +168,7 @@ export default function OnlinePage() {
           action,
           move,
           room: id,
+          code: action === 'join' && !id ? normalizedCode : undefined,
           minutes,
           revision: activeRoom?.revision,
         },
@@ -285,34 +290,68 @@ export default function OnlinePage() {
           แล้วกลับมาที่แท็บนี้
         </p>
       ) : !activeRoom ? (
-        <section className="panel space-y-3">
-          <h2 className="font-semibold">
-            {id ? 'เข้าห้องที่ได้รับเชิญ' : 'สร้างห้องส่วนตัว'}
-          </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <section className="panel space-y-3">
+            <h2 className="font-semibold">
+              {id ? 'เข้าห้องที่ได้รับเชิญ' : 'สร้างห้องส่วนตัว'}
+            </h2>
+            {!id && (
+              <label className="block">
+                เวลาต่อฝ่าย{' '}
+                <select
+                  className="control"
+                  value={minutes}
+                  onChange={(event) => setMinutes(Number(event.target.value))}
+                >
+                  {[3, 5, 10, 15].map((n) => (
+                    <option key={n} value={n}>
+                      {n} นาที
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button
+              className="control primary-control"
+              disabled={busy || !online}
+              onClick={() => void send(id ? 'join' : 'create')}
+            >
+              {id ? 'เข้าห้อง' : 'สร้างห้อง'}
+            </button>
+          </section>
           {!id && (
-            <label className="block">
-              เวลาต่อฝ่าย{' '}
-              <select
-                className="control"
-                value={minutes}
-                onChange={(event) => setMinutes(Number(event.target.value))}
+            <form
+              className="panel space-y-3"
+              onSubmit={(event) => {
+                event.preventDefault()
+                if (/^[0-9A-F]{10}$/.test(normalizedCode)) void send('join')
+              }}
+            >
+              <h2 className="font-semibold">เข้าห้องด้วยรหัส</h2>
+              <label className="block">
+                รหัสห้อง
+                <input
+                  className="control mt-1 block w-full font-mono uppercase"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  placeholder="เช่น A7F32-B0D91"
+                  maxLength={24}
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <button
+                className="control primary-control"
+                disabled={
+                  busy || !online || !/^[0-9A-F]{10}$/.test(normalizedCode)
+                }
               >
-                {[3, 5, 10, 15].map((n) => (
-                  <option key={n} value={n}>
-                    {n} นาที
-                  </option>
-                ))}
-              </select>
-            </label>
+                เข้าห้องด้วยรหัส
+              </button>
+            </form>
           )}
-          <button
-            className="control primary-control"
-            disabled={busy || !online}
-            onClick={() => void send(id ? 'join' : 'create')}
-          >
-            {id ? 'เข้าห้อง' : 'สร้างห้อง'}
-          </button>
-        </section>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <section className="panel w-full max-w-xl" aria-label="กระดานออนไลน์">
@@ -356,6 +395,30 @@ export default function OnlinePage() {
             </p>
             {!activeRoom.black_id && (
               <>
+                {activeRoom.room_code && (
+                  <div className="space-y-2">
+                    <p>
+                      รหัสห้อง{' '}
+                      <strong className="font-mono text-accent">
+                        {activeRoom.room_code.slice(0, 5)}-
+                        {activeRoom.room_code.slice(5)}
+                      </strong>
+                    </p>
+                    <button
+                      className="control"
+                      onClick={() =>
+                        void navigator.clipboard
+                          .writeText(activeRoom.room_code)
+                          .then(
+                            () => setMessage('คัดลอกรหัสห้องแล้ว'),
+                            () => setMessage('พิมพ์รหัสที่แสดงให้เพื่อนได้เลย'),
+                          )
+                      }
+                    >
+                      คัดลอกรหัสห้อง
+                    </button>
+                  </div>
+                )}
                 <button
                   className="control primary-control"
                   onClick={() =>
@@ -368,7 +431,7 @@ export default function OnlinePage() {
                   คัดลอกลิงก์เชิญ
                 </button>
                 <p className="text-sm text-secondary">
-                  ส่งลิงก์ให้เพื่อนที่มีบัญชี ChessLens คนแรกที่กดเข้าห้องจะได้ฝั่งดำ
+                  ส่งรหัสห้องหรือลิงก์ให้เพื่อนที่มีบัญชี ChessLens คนแรกที่กดเข้าห้องจะได้ฝั่งดำ
                 </p>
               </>
             )}

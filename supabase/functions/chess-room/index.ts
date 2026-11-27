@@ -60,12 +60,21 @@ Deno.serve(async (request: Request) => {
         : respond({ error: 'room_changed' }, 409)
     }
 
-    if (typeof body.room !== 'string' || !ids.test(body.room))
-      return respond({ error: 'invalid_room' }, 400)
+    const byCode = body.action === 'join' && !body.room
+    const code =
+      typeof body.code === 'string'
+        ? body.code.replace(/[\s-]/g, '').toUpperCase()
+        : ''
+    if (
+      byCode
+        ? !/^[0-9A-F]{10}$/.test(code)
+        : typeof body.room !== 'string' || !ids.test(body.room)
+    )
+      return respond({ error: byCode ? 'invalid_code' : 'invalid_room' }, 400)
     const { data, error } = await db
       .from('online_rooms')
       .select()
-      .eq('id', body.room)
+      .eq(byCode ? 'room_code' : 'id', byCode ? code : body.room)
       .maybeSingle()
     if (error) throw error
     if (!data) return respond({ error: 'room_unavailable' }, 404)
