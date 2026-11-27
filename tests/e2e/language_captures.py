@@ -31,6 +31,7 @@ with sync_playwright() as playwright:
         expect(page.get_by_role("region", name="หมากที่กินได้")).to_be_visible()
         page.get_by_label("ภาษา").select_option("en")
         expect(page.locator("html")).to_have_attribute("lang", "en")
+        expect(page).to_have_title("ChessLens — Play and review chess with Stockfish")
         expect(page.get_by_role("heading", name="Play against Stockfish")).to_be_visible()
 
         page.evaluate("""() => localStorage.setItem('chesslens.play.v1', JSON.stringify({

@@ -6,10 +6,14 @@ import { puzzlesEnabled } from './pages/Puzzles/feature'
 import { onlineEnabled } from './pages/Online/feature'
 import { SiteNav } from './components/SiteNav'
 import { registerOffline } from './pwa/register'
-import { locale } from './i18n/locale'
+import { locale, translate } from './i18n/locale'
 import './styles.css'
 
 document.documentElement.lang = locale
+document.title = translate(
+  'ChessLens — เล่นและรีวิวหมากรุกด้วย Stockfish',
+  'ChessLens — Play and review chess with Stockfish',
+)
 
 const AccountPage = lazy(() => import('./pages/Account'))
 const OpeningPage = lazy(() => import('./pages/Opening'))
