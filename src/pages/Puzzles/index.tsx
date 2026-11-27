@@ -212,7 +212,7 @@ export default function PuzzlesPage() {
         <section className="panel space-y-2">
           <p role="status">
             {translate('ฝึกครบ', 'Completed')} {puzzles.length}{' '}
-            {translate('ข้อแล้ว', ' puzzles')}
+            {translate('ข้อแล้ว', 'puzzles')}
           </p>
           <button className="control" onClick={() => setIndex(0)}>
             {translate('ฝึกชุดนี้อีกครั้ง', 'Practice this set again')}
@@ -275,7 +275,7 @@ function PuzzleBoard({
         </h2>
         <p role="status">
           {state === 'start'
-            ? translate('หาตาที่ดีที่สุดของฝ่าย', 'Find the best move for') +
+            ? translate('หาตาที่ดีที่สุดของฝ่าย', 'Find the best move for ') +
               (game.turn() === 'w'
                 ? translate('ขาว', 'White')
                 : translate('ดำ', 'Black'))

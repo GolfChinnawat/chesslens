@@ -168,7 +168,7 @@ export default function OpeningPage() {
                   'ใช้ได้ในอีกไลน์ของชุดฝึก · ',
                   'Matches another line in this set · ',
                 )) + played.san
-          : translate('เดินได้ แต่นอก', 'Legal move, outside the') +
+          : translate('เดินได้ แต่นอก', 'Legal move, outside the ') +
             (mode === 'line'
               ? translate('ไลน์ที่เลือก', 'selected line')
               : translate('ชุดฝึก', 'practice set')) +
@@ -295,7 +295,7 @@ export default function OpeningPage() {
               <p className="opening-hint">
                 {translate(
                   'คะแนนวัดว่าตรงกับ',
-                  'Your score measures how often you match the',
+                  'Your score measures how often you match the ',
                 )}
                 {mode === 'line'
                   ? translate('ไลน์ที่เลือก', 'selected line')
