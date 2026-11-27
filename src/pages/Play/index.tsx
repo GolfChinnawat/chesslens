@@ -3,6 +3,7 @@ import { AppInstallation } from '../../pwa/AppInstallation'
 import { useState } from 'react'
 import type { Color, Move } from 'chess.js'
 import { CapturedPieces } from '../../components/CapturedPieces'
+import { MatchResult } from '../../components/MatchResult'
 import { PlayBoard } from '../../components/play-board'
 import { botLevels, isBotLevel } from '../../engine/bot-levels'
 import { playMessages as text } from '../../i18n'
@@ -127,6 +128,19 @@ export function PlayPage() {
               {status}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
+              {outcome && (
+                <MatchResult
+                  result={
+                    outcome.winner === 'w'
+                      ? '1-0'
+                      : outcome.winner === 'b'
+                        ? '0-1'
+                        : '1/2-1/2'
+                  }
+                  reason={text.reasons[outcome.reason]}
+                  side={player}
+                />
+              )}
               <button
                 className="control"
                 disabled={
