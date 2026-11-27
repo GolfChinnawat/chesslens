@@ -1,3 +1,4 @@
+import { translate } from '../i18n/locale'
 import { Chess } from 'chess.js'
 import type { UciInfo } from '../engine/uci'
 import type { GameReview } from '../types/review'
@@ -6,8 +7,8 @@ import { winPercent } from './classify'
 
 export const puzzleDepth = 16
 export const puzzleThemes = {
-  mate: 'รุกฆาต',
-  material: 'ชนะหมาก',
+  mate: translate('รุกฆาต', 'Checkmate'),
+  material: translate('ชนะหมาก', 'Win material'),
 }
 
 export type PuzzleCandidate = {

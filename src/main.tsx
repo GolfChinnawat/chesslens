@@ -6,7 +6,10 @@ import { puzzlesEnabled } from './pages/Puzzles/feature'
 import { onlineEnabled } from './pages/Online/feature'
 import { SiteNav } from './components/SiteNav'
 import { registerOffline } from './pwa/register'
+import { locale } from './i18n/locale'
 import './styles.css'
+
+document.documentElement.lang = locale
 
 const AccountPage = lazy(() => import('./pages/Account'))
 const OpeningPage = lazy(() => import('./pages/Opening'))

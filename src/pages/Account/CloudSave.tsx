@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { useState } from 'react'
 import { cloud, saveCloudReview } from '../../lib/cloud'
 import type { GameReview } from '../../types/review'
@@ -14,21 +15,27 @@ export function CloudSave({ review }: { review: GameReview }) {
       const { data, error } = await cloud.auth.getSession()
       if (error) throw error
       if (!data.session) {
-        setStatus('เข้าสู่ระบบเพื่อบันทึกรีวิว')
+        setStatus(translate('เข้าสู่ระบบเพื่อบันทึกรีวิว', 'Sign in to save the review'))
         return
       }
       await saveCloudReview(review)
-      setStatus('บันทึกในคลังเกมแล้ว')
+      setStatus(translate('บันทึกในคลังเกมแล้ว', 'Saved to your game library'))
     } catch {
-      setStatus('บันทึกไม่ได้ กรุณาลองอีกครั้ง')
+      setStatus(
+        translate('บันทึกไม่ได้ กรุณาลองอีกครั้ง', 'Could not save. Try again.'),
+      )
     } finally {
       setBusy(false)
     }
   }
   return (
     <>
-      <button className="control primary-control" disabled={busy} onClick={() => void save()}>
-        บันทึกเข้าคลังเกม
+      <button
+        className="control primary-control"
+        disabled={busy}
+        onClick={() => void save()}
+      >
+        {translate('บันทึกเข้าคลังเกม', 'Save to game library')}
       </button>
       {status && (
         <span className="self-center text-sm" role="status">

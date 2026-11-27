@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { lazy, Suspense } from 'react'
 import { useReviewSound } from './useReviewSound'
 import { PlanBoard } from './PlanBoard'
@@ -8,7 +9,9 @@ import { reviewSummary } from '../../analysis/review-summary'
 import { findOpening } from '../../analysis/openings'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
-import type { Square } from 'chess.js'
+import { Chess, type Square } from 'chess.js'
+import { CapturedPieces } from '../../components/CapturedPieces'
+import { countCaptures } from '../../lib/game'
 import {
   Area,
   AreaChart,
@@ -74,8 +77,21 @@ export function ReviewBoard({
   const retrying = missed && mode === 'retry'
   const beforeMove = missed && mode !== 'after'
   const boardPly = beforeMove ? ply - 1 : ply
-  const coaching = import.meta.env.VITE_MOVE_COACH !== 'false' &&
-    !retrying && !planning && grade
+  const gamePgn = review.game.pgn
+  const captureHistory = useMemo(() => {
+    const game = new Chess()
+    try {
+      game.loadPgn(gamePgn)
+      return game.history({ verbose: true })
+    } catch {
+      return []
+    }
+  }, [gamePgn])
+  const coaching =
+    import.meta.env.VITE_MOVE_COACH !== 'false' &&
+    !retrying &&
+    !planning &&
+    grade
       ? explainMove(review, ply, grade)
       : undefined
   const triedMove = retrying && trial !== undefined
@@ -241,7 +257,7 @@ export function ReviewBoard({
               setPractice(true)
             }}
           >
-            ฝึกจากตาพลาด
+            {translate('ฝึกจากตาพลาด', 'Practice mistakes')}
           </button>
           <button
             className="control"
@@ -258,7 +274,7 @@ export function ReviewBoard({
               setTimeout(() => URL.revokeObjectURL(url), 1000)
             }}
           >
-            ดาวน์โหลด PGN
+            {translate('ดาวน์โหลด PGN', 'Download PGN')}
           </button>
           <button
             type="button"
@@ -269,9 +285,14 @@ export function ReviewBoard({
             {sound.enabled ? t.soundOn : t.soundOff}
           </button>
           <details className="control relative">
-            <summary className="cursor-pointer">คีย์ลัด</summary>
+            <summary className="cursor-pointer">
+              {translate('คีย์ลัด', 'Shortcuts')}
+            </summary>
             <p className="absolute right-0 top-full z-30 mt-1 w-56 rounded-md border border-edge bg-surface p-3 shadow-lg">
-              ← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม
+              {translate(
+                '← / → ย้อนหรือไปต่อ · Home / End ไปต้นหรือท้ายเกม',
+                '← / → Previous or next move · Home / End First or last position',
+              )}
             </p>
           </details>
         </div>
@@ -324,8 +345,12 @@ export function ReviewBoard({
                     areArrowsAllowed={false}
                     arePiecesDraggable={false}
                     customArrows={arrows}
-                    customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
-                    customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
+                    customLightSquareStyle={{
+                      backgroundColor: 'var(--board-light)',
+                    }}
+                    customDarkSquareStyle={{
+                      backgroundColor: 'var(--board-dark)',
+                    }}
                     customSquareStyles={
                       move
                         ? {
@@ -400,7 +425,9 @@ export function ReviewBoard({
                 disabled={ply === last || retrying || planning}
                 onClick={() => setAuto(!auto)}
               >
-                {auto && ply < last ? 'หยุดเล่นอัตโนมัติ' : 'เล่นย้อนหลังอัตโนมัติ'}
+                {auto && ply < last
+                  ? translate('หยุดเล่นอัตโนมัติ', 'Stop autoplay')
+                  : translate('เล่นย้อนหลังอัตโนมัติ', 'Autoplay moves')}
               </button>
               <button
                 className="control"
@@ -458,23 +485,39 @@ export function ReviewBoard({
             {import.meta.env.VITE_MOVE_COACH !== 'false' && (
               <details key={ply} className="mt-2 text-sm">
                 <summary className="control inline-block cursor-pointer font-semibold text-accent">
-                  อธิบายตานี้
+                  {translate('อธิบายตานี้', 'Explain this move')}
                 </summary>
                 <div className="mt-2 space-y-2 text-secondary">
                   {coaching ? (
                     <>
                       <p>{coaching.reason}</p>
-                      <p className="font-semibold text-foreground">{coaching.recommendation}</p>
+                      <p className="font-semibold text-foreground">
+                        {coaching.recommendation}
+                      </p>
                       <p>{coaching.lesson}</p>
                     </>
                   ) : (
-                    <p>{planning || retrying
-                      ? 'กลับมาที่รีวิวเกมเพื่อดูคำอธิบาย'
-                      : !current.move
-                        ? 'เลือกตาใดก็ได้จากรายการเดินเพื่อดูคำอธิบาย'
-                        : analyzing
-                          ? 'รอ Stockfish วิเคราะห์ตานี้ให้เสร็จ'
-                          : 'ยังไม่มีผลวิเคราะห์พอสำหรับตานี้ ลองวิเคราะห์เกมอีกครั้ง'}</p>
+                    <p>
+                      {planning || retrying
+                        ? translate(
+                            'กลับมาที่รีวิวเกมเพื่อดูคำอธิบาย',
+                            'Return to the review to see the explanation',
+                          )
+                        : !current.move
+                          ? translate(
+                              'เลือกตาใดก็ได้จากรายการเดินเพื่อดูคำอธิบาย',
+                              'Select a move from the list to see its explanation',
+                            )
+                          : analyzing
+                            ? translate(
+                                'รอ Stockfish วิเคราะห์ตานี้ให้เสร็จ',
+                                'Wait for Stockfish to finish analyzing this move',
+                              )
+                            : translate(
+                                'ยังไม่มีผลวิเคราะห์พอสำหรับตานี้ ลองวิเคราะห์เกมอีกครั้ง',
+                                'There is not enough analysis for this move. Try analyzing the game again.',
+                              )}
+                    </p>
                   )}
                 </div>
               </details>
@@ -502,6 +545,13 @@ export function ReviewBoard({
           aria-label={labels.summary}
           tabIndex={fit ? 0 : undefined}
         >
+          {!planning && !retrying && (
+            <div className="panel">
+              <CapturedPieces
+                captures={countCaptures(captureHistory.slice(0, boardPly))}
+              />
+            </div>
+          )}
           <section className="panel">
             <h3 className="font-semibold">{t.graph}</h3>
             <p className="text-sm text-secondary">{t.eval}</p>
@@ -562,7 +612,10 @@ export function ReviewBoard({
           <GradeSummary data={classification} names={[White, Black]} />
           <details className="panel space-y-2">
             <summary className="cursor-pointer font-semibold">
-              จุดเปลี่ยนและความแม่นยำแยกช่วงเกม
+              {translate(
+                'จุดเปลี่ยนและความแม่นยำแยกช่วงเกม',
+                'Turning points and accuracy by game phase',
+              )}
             </summary>
 
             {summary.swings.length ? (
@@ -575,31 +628,36 @@ export function ReviewBoard({
                     >
                       {move.number}
                       {move.color === 'w' ? '.' : '…'} {move.san} · −
-                      {swing.toFixed(1)} จุด
+                      {swing.toFixed(1)} {translate('จุด', 'points')}
                     </button>
                   </li>
                 ))}
               </ol>
             ) : (
-              <p className="text-sm">ยังไม่มีคะแนนประเมินที่ลดลง</p>
+              <p className="text-sm">
+                {translate(
+                  'ยังไม่มีคะแนนประเมินที่ลดลง',
+                  'No evaluation drops recorded',
+                )}
+              </p>
             )}
             <table className="w-full text-sm">
               <caption className="text-left font-semibold">
-                ความแม่นยำแยกช่วงเกม
+                {translate('ความแม่นยำแยกช่วงเกม', 'Accuracy by game phase')}
               </caption>
               <thead>
                 <tr>
                   <td />
-                  <th scope="col">ขาว</th>
-                  <th scope="col">ดำ</th>
+                  <th scope="col">{translate('ขาว', 'White')}</th>
+                  <th scope="col">{translate('ดำ', 'Black')}</th>
                 </tr>
               </thead>
               <tbody>
                 {(
                   [
-                    ['opening', 'เปิดเกม'],
-                    ['middle', 'กลางเกม'],
-                    ['end', 'ท้ายเกม'],
+                    ['opening', translate('เปิดเกม', 'Opening')],
+                    ['middle', translate('กลางเกม', 'Middlegame')],
+                    ['end', translate('ท้ายเกม', 'Endgame')],
                   ] as const
                 ).map(([phase, label]) => (
                   <tr key={phase}>
@@ -626,7 +684,7 @@ export function ReviewBoard({
                   checked={more}
                   onChange={(event) => setMore(event.target.checked)}
                 />
-                แนวเดินเพิ่มเติม
+                {translate('แนวเดินเพิ่มเติม', 'More engine lines')}
               </label>
             )}
             {planning ? (

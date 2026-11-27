@@ -1,6 +1,8 @@
+import { translate } from '../../i18n/locale'
 import { AppInstallation } from '../../pwa/AppInstallation'
 import { useState } from 'react'
-import type { Color, Move, PieceSymbol } from 'chess.js'
+import type { Color, Move } from 'chess.js'
+import { CapturedPieces } from '../../components/CapturedPieces'
 import { PlayBoard } from '../../components/play-board'
 import { botLevels, isBotLevel } from '../../engine/bot-levels'
 import { playMessages as text } from '../../i18n'
@@ -16,11 +18,6 @@ import { useBot } from './use-bot'
 import { useHint } from './use-hint'
 
 const colorLabel = (color: Color) => (color === 'w' ? text.white : text.black)
-const glyphs: Record<Color, Record<PieceSymbol, string>> = {
-  w: { p: '♙', n: '♘', b: '♗', r: '♖', q: '♕', k: '♔' },
-  b: { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' },
-}
-
 function moveRows(history: Move[]) {
   const rows = new Map<number, { w?: Move; b?: Move }>()
   for (const move of history) {
@@ -130,13 +127,31 @@ export function PlayPage() {
               {status}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button className="control" disabled={!canMove || hint.current === 'thinking' || !!suggested}
-                onClick={() => void hint.request()}>คำใบ้</button>
+              <button
+                className="control"
+                disabled={
+                  !canMove || hint.current === 'thinking' || !!suggested
+                }
+                onClick={() => void hint.request()}
+              >
+                {translate('คำใบ้', 'Hint')}
+              </button>
               <p className="text-sm text-secondary" role="status">
-                {suggested ? <>Stockfish แนะนำ <strong className="font-mono text-accent">{suggested.san}</strong></>
-                  : hint.current === 'thinking' ? 'กำลังหาคำใบ้…'
-                  : hint.current === 'error' ? 'หาคำใบ้ไม่สำเร็จ ลองอีกครั้ง'
-                  : null}
+                {suggested ? (
+                  <>
+                    {translate('Stockfish แนะนำ', 'Stockfish recommends')}{' '}
+                    <strong className="font-mono text-accent">
+                      {suggested.san}
+                    </strong>
+                  </>
+                ) : hint.current === 'thinking' ? (
+                  translate('กำลังหาคำใบ้…', 'Finding a hint…')
+                ) : hint.current === 'error' ? (
+                  translate(
+                    'หาคำใบ้ไม่สำเร็จ ลองอีกครั้ง',
+                    'Could not find a hint. Try again.',
+                  )
+                ) : null}
               </p>
             </div>
             {bot.notice &&
@@ -224,6 +239,17 @@ export function PlayPage() {
           </section>
           <section className="panel">
             <h2 className="font-semibold">{text.moves}</h2>
+            <div className="mt-2">
+              <CapturedPieces captures={captures} />
+            </div>
+            <p className="mt-1 text-sm text-secondary">
+              {balance
+                ? text.ahead(
+                    colorLabel(balance > 0 ? 'w' : 'b'),
+                    Math.abs(balance),
+                  )
+                : text.equal}
+            </p>
             {history.length === 0 ? (
               <p className="mt-2 text-sm text-muted">{text.emptyMoves}</p>
             ) : (
@@ -290,27 +316,6 @@ export function PlayPage() {
                 </div>
               </>
             )}
-            <h3 className="mt-4 border-t border-line pt-3 text-sm font-semibold">
-              {text.captured}
-            </h3>
-            {(['w', 'b'] as const).map((color) => (
-              <p key={color} className="mt-1 text-sm text-secondary">
-                {colorLabel(color)}{' '}
-                <span className="ml-1 text-base text-foreground">
-                  {captures[color]
-                    .map((piece) => glyphs[opponent(color)][piece])
-                    .join(' ') || text.none}
-                </span>
-              </p>
-            ))}
-            <p className="mt-1 text-sm text-secondary">
-              {balance
-                ? text.ahead(
-                    colorLabel(balance > 0 ? 'w' : 'b'),
-                    Math.abs(balance),
-                  )
-                : text.equal}
-            </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button className="control" onClick={() => void copyPgn()}>
                 {text.copy}
@@ -332,7 +337,7 @@ export function PlayPage() {
               rel="noopener noreferrer"
               className="text-sm text-accent underline-offset-4 hover:underline"
             >
-              แจ้งบั๊กบน GitHub
+              {translate('แจ้งบั๊กบน GitHub', 'Report a bug on GitHub')}
             </a>
           </footer>
         </aside>

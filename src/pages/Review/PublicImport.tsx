@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { publicGames, type Provider } from '../../lib/public-games'
 
@@ -20,13 +21,18 @@ export function PublicImport({
     const first = String(form.get('since'))
     const last = String(form.get('until'))
     if (first && last && first > last) {
-      setStatus('วันที่เริ่มต้องมาก่อนได้ถึงวันสิ้นสุด')
+      setStatus(
+        translate(
+          'วันที่เริ่มต้องมาก่อนได้ถึงวันสิ้นสุด',
+          'The start date must be on or before the end date',
+        ),
+      )
       return
     }
     const controller = new AbortController()
     pending.current = controller
     setBusy(true)
-    setStatus('กำลังโหลดเกม…')
+    setStatus(translate('กำลังโหลดเกม…', 'Loading games…'))
     try {
       const pgn = await publicGames(
         {
@@ -42,19 +48,30 @@ export function PublicImport({
       if (controller.signal.aborted) return
       if (pgn) {
         onLoad(pgn, username)
-        setStatus('โหลดแล้ว เลือกเกมด้านล่างได้เลย')
-      } else setStatus('ไม่พบเกมตามเงื่อนไข')
+        setStatus(
+          translate(
+            'โหลดแล้ว เลือกเกมด้านล่างได้เลย',
+            'Games loaded. Select one below.',
+          ),
+        )
+      } else setStatus(translate('ไม่พบเกมตามเงื่อนไข', 'No matching games'))
     } catch (error) {
       if (controller.signal.aborted) return
       const code = (error as Error).message
       setStatus(
         code === '404'
-          ? 'ไม่พบชื่อผู้ใช้'
+          ? translate('ไม่พบชื่อผู้ใช้', 'Username not found')
           : code === '429'
-            ? 'ขอข้อมูลถี่เกินไป กรุณารอสักครู่แล้วลองอีกครั้ง'
+            ? translate(
+                'ขอข้อมูลถี่เกินไป กรุณารอสักครู่แล้วลองอีกครั้ง',
+                'Too many requests. Wait a moment and try again.',
+              )
             : code === 'username'
-              ? 'ชื่อผู้ใช้ไม่ถูกต้อง'
-              : 'โหลดเกมไม่ได้ ลองใหม่หรือใช้ไฟล์ PGN',
+              ? translate('ชื่อผู้ใช้ไม่ถูกต้อง', 'Invalid username')
+              : translate(
+                  'โหลดเกมไม่ได้ ลองใหม่หรือใช้ไฟล์ PGN',
+                  'Could not load games. Try again or import a PGN file.',
+                ),
       )
     } finally {
       pending.current = undefined
@@ -67,13 +84,15 @@ export function PublicImport({
       onSubmit={(event) => void load(event)}
       className="panel mb-4 max-w-3xl"
     >
-      <h2 className="mb-3 font-semibold">นำเข้าจากชื่อผู้ใช้</h2>
+      <h2 className="mb-3 font-semibold">
+        {translate('นำเข้าจากชื่อผู้ใช้', 'Import by username')}
+      </h2>
       <fieldset
         disabled={busy}
         className="grid grid-cols-2 gap-2 sm:grid-cols-3"
       >
         <label className="text-sm">
-          แพลตฟอร์ม
+          {translate('แพลตฟอร์ม', 'Platform')}
           <select
             className="control mt-1 block w-full"
             value={provider}
@@ -84,7 +103,7 @@ export function PublicImport({
           </select>
         </label>
         <label className="text-sm">
-          ชื่อผู้ใช้
+          {translate('ชื่อผู้ใช้', 'Username')}
           <input
             required
             name="username"
@@ -93,7 +112,7 @@ export function PublicImport({
           />
         </label>
         <label className="text-sm">
-          จำนวนเกม
+          {translate('จำนวนเกม', 'Number of games')}
           <select name="limit" className="control mt-1 block w-full">
             <option>10</option>
             <option>25</option>
@@ -101,13 +120,13 @@ export function PublicImport({
           </select>
         </label>
         <label className="text-sm">
-          ประเภทเวลา
+          {translate('ประเภทเวลา', 'Time control')}
           <select
             key={provider}
             name="speed"
             className="control mt-1 block w-full"
           >
-            <option value="">ทั้งหมด</option>
+            <option value="">{translate('ทั้งหมด', 'All')}</option>
             {(provider === 'lichess'
               ? ['bullet', 'blitz', 'rapid', 'classical', 'correspondence']
               : ['bullet', 'blitz', 'rapid', 'daily']
@@ -117,7 +136,7 @@ export function PublicImport({
           </select>
         </label>
         <label className="text-sm">
-          ตั้งแต่ (UTC)
+          {translate('ตั้งแต่ (UTC)', 'From (UTC)')}
           <input
             name="since"
             type="date"
@@ -125,18 +144,15 @@ export function PublicImport({
           />
         </label>
         <label className="text-sm">
-          ถึง (UTC)
+          {translate('ถึง (UTC)', 'To (UTC)')}
           <input
             name="until"
             type="date"
             className="control mt-1 block w-full min-w-0"
           />
         </label>
-        <button
-          className="control primary-control"
-          type="submit"
-        >
-          ค้นหาเกม
+        <button className="control primary-control" type="submit">
+          {translate('ค้นหาเกม', 'Find games')}
         </button>
       </fieldset>
       {status && (

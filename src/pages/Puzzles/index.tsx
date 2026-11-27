@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { Chess } from 'chess.js'
 import { lazy, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -68,7 +69,7 @@ export default function PuzzlesPage() {
     active.current = controller
     const { signal } = controller
     const engine = new StockfishEngine()
-    setProgress('กำลังโหลดเกมที่เคยรีวิว…')
+    setProgress(translate('กำลังโหลดเกมที่เคยรีวิว…', 'Loading reviewed games…'))
     setMessage('')
     setShowSource(false)
     setIndex(0)
@@ -78,7 +79,13 @@ export default function PuzzlesPage() {
       try {
         cloud = await loadCloudReviews(signal)
       } catch {
-        if (!signal.aborted) setMessage('โหลดคลังออนไลน์ไม่ได้ กำลังใช้รีวิวในเครื่อง')
+        if (!signal.aborted)
+          setMessage(
+            translate(
+              'โหลดคลังออนไลน์ไม่ได้ กำลังใช้รีวิวในเครื่อง',
+              'Could not load the online library. Using local reviews.',
+            ),
+          )
       }
       signal.throwIfAborted()
       const reviews = [...localReviews(), ...cloud]
@@ -86,11 +93,11 @@ export default function PuzzlesPage() {
       const results: Puzzle[] = []
       for (const [i, candidate] of candidates.entries()) {
         setProgress(
-          'Stockfish กำลังตรวจ ' +
+          translate('Stockfish กำลังตรวจ ', 'Stockfish is checking ') +
             (i + 1) +
             ' / ' +
             candidates.length +
-            ' ตำแหน่ง',
+            translate(' ตำแหน่ง', ' position(s)'),
         )
         const result = await engine.analyze(candidate.fen, {
           depth: puzzleDepth,
@@ -108,8 +115,14 @@ export default function PuzzlesPage() {
           [
             previous,
             reviews.length
-              ? 'ยังไม่พบตำแหน่งที่ผ่านเกณฑ์ ลองเลือกอีกฝ่ายหรือรีวิวเกมเพิ่ม'
-              : 'ยังไม่มีเกมที่รีวิวแล้ว ลองรีวิวเกมหรือลงชื่อเข้าใช้เพื่อโหลดคลัง',
+              ? translate(
+                  'ยังไม่พบตำแหน่งที่ผ่านเกณฑ์ ลองเลือกอีกฝ่ายหรือรีวิวเกมเพิ่ม',
+                  'No eligible positions found. Try the other side or review more games.',
+                )
+              : translate(
+                  'ยังไม่มีเกมที่รีวิวแล้ว ลองรีวิวเกมหรือลงชื่อเข้าใช้เพื่อโหลดคลัง',
+                  'No reviewed games yet. Review a game or sign in to load your library.',
+                ),
           ]
             .filter(Boolean)
             .join(' · '),
@@ -117,7 +130,12 @@ export default function PuzzlesPage() {
     } catch {
       if (active.current === controller)
         setMessage(
-          signal.aborted ? 'หยุดตรวจตำแหน่งแล้ว' : 'สร้างโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง',
+          signal.aborted
+            ? translate('หยุดตรวจตำแหน่งแล้ว', 'Position search stopped')
+            : translate(
+                'สร้างโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง',
+                'Could not generate puzzles. Try again.',
+              ),
         )
     } finally {
       engine.destroy()
@@ -131,25 +149,34 @@ export default function PuzzlesPage() {
   return (
     <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-8">
       <header className="space-y-3 mb-4">
-        <h1 className="text-2xl font-semibold sm:text-3xl">โจทย์จากเกมของคุณ</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl">
+          {translate('โจทย์จากเกมของคุณ', 'Puzzles from your games')}
+        </h1>
       </header>
       <section className="panel space-y-3">
-        <h2 className="font-semibold">สร้างชุดโจทย์</h2>
+        <h2 className="font-semibold">
+          {translate('สร้างชุดโจทย์', 'Create a puzzle set')}
+        </h2>
         <p className="text-sm text-secondary">
-          Stockfish คัดโจทย์รุกฆาตและชนะหมากจากรีวิวในเครื่องและเกมล่าสุดในคลัง
+          {translate(
+            'Stockfish คัดโจทย์รุกฆาตและชนะหมากจากรีวิวในเครื่องและเกมล่าสุดในคลัง',
+            'Stockfish finds checkmate and material-winning puzzles in local reviews and recent library games.',
+          )}
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm">
-            ฝึกฝ่าย{' '}
+            {translate('ฝึกฝ่าย', 'Practice as')}{' '}
             <select
               className="control"
               value={side}
               disabled={!!progress}
               onChange={(event) => setSide(event.target.value)}
             >
-              <option value="both">ทั้งสองฝ่าย</option>
-              <option value="w">ขาว</option>
-              <option value="b">ดำ</option>
+              <option value="both">
+                {translate('ทั้งสองฝ่าย', 'Both sides')}
+              </option>
+              <option value="w">{translate('ขาว', 'White')}</option>
+              <option value="b">{translate('ดำ', 'Black')}</option>
             </select>
           </label>
           <button
@@ -157,11 +184,11 @@ export default function PuzzlesPage() {
             disabled={!!progress}
             onClick={() => void generate()}
           >
-            สร้างโจทย์
+            {translate('สร้างโจทย์', 'Generate puzzles')}
           </button>
           {progress && (
             <button className="control" onClick={() => active.current?.abort()}>
-              หยุด
+              {translate('หยุด', 'Stop')}
             </button>
           )}
         </div>
@@ -183,9 +210,12 @@ export default function PuzzlesPage() {
       )}
       {!puzzle && puzzles.length > 0 && (
         <section className="panel space-y-2">
-          <p role="status">ฝึกครบ {puzzles.length} ข้อแล้ว</p>
+          <p role="status">
+            {translate('ฝึกครบ', 'Completed')} {puzzles.length}{' '}
+            {translate('ข้อแล้ว', ' puzzles')}
+          </p>
           <button className="control" onClick={() => setIndex(0)}>
-            ฝึกชุดนี้อีกครั้ง
+            {translate('ฝึกชุดนี้อีกครั้ง', 'Practice this set again')}
           </button>
         </section>
       )}
@@ -223,7 +253,7 @@ function PuzzleBoard({
   return (
     <section
       className="grid items-start gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]"
-      aria-label="กระดานโจทย์"
+      aria-label={translate('กระดานโจทย์', 'Puzzle board')}
     >
       <div className="panel w-full max-w-lg">
         <PlayBoard
@@ -240,32 +270,42 @@ function PuzzleBoard({
       </div>
       <div className="panel space-y-3">
         <h2 className="font-semibold">
-          ข้อ {number} / {total} · {puzzleThemes[puzzle.theme]}
+          {translate('ข้อ', 'Puzzle')} {number} / {total} ·{' '}
+          {puzzleThemes[puzzle.theme]}
         </h2>
         <p role="status">
           {state === 'start'
-            ? 'หาตาที่ดีที่สุดของฝ่าย' + (game.turn() === 'w' ? 'ขาว' : 'ดำ')
+            ? translate('หาตาที่ดีที่สุดของฝ่าย', 'Find the best move for') +
+              (game.turn() === 'w'
+                ? translate('ขาว', 'White')
+                : translate('ดำ', 'Black'))
             : state === 'retry'
-              ? 'ลองอีกครั้ง'
-              : (state === 'solved' ? 'ถูกต้อง · ' : 'เฉลย · ') + puzzle.san}
+              ? translate('ลองอีกครั้ง', 'Try again')
+              : (state === 'solved'
+                  ? translate('ถูกต้อง · ', 'Correct · ')
+                  : translate('เฉลย · ', 'Solution · ')) + puzzle.san}
         </p>
         <div className="flex flex-wrap gap-2">
           {done ? (
             <>
               <button className="control primary-control" onClick={onNext}>
-                {number === total ? 'จบชุดฝึก' : 'ข้อถัดไป'}
+                {number === total
+                  ? translate('จบชุดฝึก', 'Finish practice')
+                  : translate('ข้อถัดไป', 'Next puzzle')}
               </button>
               <button
                 className="control"
                 aria-expanded={showSource}
                 onClick={onSource}
               >
-                {showSource ? 'ซ่อนเกมต้นฉบับ' : 'เปิดเกมต้นฉบับ'}
+                {showSource
+                  ? translate('ซ่อนเกมต้นฉบับ', 'Hide original game')
+                  : translate('เปิดเกมต้นฉบับ', 'Open original game')}
               </button>
             </>
           ) : (
             <button className="control" onClick={() => setState('reveal')}>
-              ดูเฉลย
+              {translate('ดูเฉลย', 'Show solution')}
             </button>
           )}
         </div>

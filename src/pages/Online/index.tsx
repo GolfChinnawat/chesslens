@@ -1,5 +1,8 @@
+import { translate } from '../../i18n/locale'
 import { Chess } from 'chess.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { CapturedPieces } from '../../components/CapturedPieces'
+import { countCaptures } from '../../lib/game'
 import { PlayBoard } from '../../components/play-board'
 import { cloud } from '../../lib/cloud'
 
@@ -18,19 +21,31 @@ type Room = {
 }
 
 const errors: Record<string, string> = {
-  invalid_code: 'รหัสห้องต้องมี 10 ตัว',
-  room_unavailable: 'ห้องนี้เต็มแล้วหรือไม่พบห้อง',
-  room_changed: 'ห้องมีการอัปเดต กรุณาลองอีกครั้ง',
-  room_not_playing: 'เกมนี้ยังไม่เริ่มหรือจบแล้ว',
-  illegal_move: 'ตานี้เดินไม่ได้',
-  not_your_turn: 'ยังไม่ถึงตาของคุณ',
-  sign_in: 'กรุณาเข้าสู่ระบบใหม่',
+  invalid_code: translate(
+    'รหัสห้องต้องมี 10 ตัว',
+    'Room codes must contain 10 characters',
+  ),
+  room_unavailable: translate(
+    'ห้องนี้เต็มแล้วหรือไม่พบห้อง',
+    'Room is full or could not be found',
+  ),
+  room_changed: translate(
+    'ห้องมีการอัปเดต กรุณาลองอีกครั้ง',
+    'This room has updated. Try again.',
+  ),
+  room_not_playing: translate(
+    'เกมนี้ยังไม่เริ่มหรือจบแล้ว',
+    'This game has not started or has already ended',
+  ),
+  illegal_move: translate('ตานี้เดินไม่ได้', 'Illegal move'),
+  not_your_turn: translate('ยังไม่ถึงตาของคุณ', 'It is not your turn yet'),
+  sign_in: translate('กรุณาเข้าสู่ระบบใหม่', 'Sign in again to continue'),
 }
 const reasons: Record<string, string> = {
-  mate: 'รุกฆาต',
-  draw: 'เสมอ',
-  timeout: 'หมดเวลา',
-  resign: 'ยอมแพ้',
+  mate: translate('รุกฆาต', 'Checkmate'),
+  draw: translate('เสมอ', 'Draw'),
+  timeout: translate('หมดเวลา', 'Time out'),
+  resign: translate('ยอมแพ้', 'Resign'),
 }
 
 function clock(ms: number) {
@@ -49,7 +64,8 @@ function MatchClock({
   active: boolean
   yours: boolean
 }) {
-  const label = color === 'w' ? 'ขาว' : 'ดำ'
+  const label =
+    color === 'w' ? translate('ขาว', 'White') : translate('ดำ', 'Black')
   const low = ms <= 30_000
   return (
     <div
@@ -57,13 +73,18 @@ function MatchClock({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm font-semibold">
         <span>
-          ฝ่าย{label}
-          {yours ? ' · คุณ' : ''}
+          {translate('ฝ่าย', 'Side: ')}
+          {label}
+          {yours ? translate(' · คุณ', ' · You') : ''}
         </span>
-        {active && <span className="text-xs text-accent">กำลังนับ</span>}
+        {active && (
+          <span className="text-xs text-accent">
+            {translate('กำลังนับ', 'Clock running')}
+          </span>
+        )}
       </div>
       <span
-        aria-label={`เวลาฝ่าย${label}`}
+        aria-label={translate('เวลาฝ่าย{0}', '{0} clock', label)}
         className={`block font-mono text-3xl font-bold tabular-nums sm:text-4xl ${low ? 'text-rose-300' : 'text-foreground'}`}
       >
         {clock(ms)}
@@ -86,10 +107,10 @@ function MatchResult({
   const dialog = useRef<HTMLDialogElement>(null)
   const title =
     result === '1/2-1/2'
-      ? 'เสมอ'
+      ? translate('เสมอ', 'Draw')
       : result === (side === 'w' ? '1-0' : '0-1')
-        ? 'คุณชนะ'
-        : 'คุณแพ้'
+        ? translate('คุณชนะ', 'You won')
+        : translate('คุณแพ้', 'You lost')
 
   useEffect(() => {
     const element = dialog.current
@@ -100,7 +121,7 @@ function MatchResult({
   return (
     <>
       <button className="control" onClick={() => dialog.current?.showModal()}>
-        ดูผลการแข่งขัน
+        {translate('ดูผลการแข่งขัน', 'Show game result')}
       </button>
       <dialog
         ref={dialog}
@@ -114,16 +135,18 @@ function MatchResult({
           {title}
         </h2>
         <p className="text-secondary">
-          ผล {result} · {reason}
+          {translate('ผล', 'Result')} {result} · {reason}
         </p>
         <div className="flex flex-wrap gap-2">
           {onReview && (
             <button className="control primary-control" onClick={onReview}>
-              รีวิวเกมนี้
+              {translate('รีวิวเกมนี้', 'Review this game')}
             </button>
           )}
           <form method="dialog">
-            <button className="control">ปิดผลการแข่งขัน</button>
+            <button className="control">
+              {translate('ปิดผลการแข่งขัน', 'Close game result')}
+            </button>
           </form>
         </div>
       </dialog>
@@ -286,7 +309,13 @@ export default function OnlinePage() {
                 : refreshed.data,
             )
         }
-        setMessage(errors[payload?.error as string] ?? 'ติดต่อห้องไม่ได้ ลองอีกครั้ง')
+        setMessage(
+          errors[payload?.error as string] ??
+            translate(
+              'ติดต่อห้องไม่ได้ ลองอีกครั้ง',
+              'Could not reach the room. Try again.',
+            ),
+        )
         return
       }
       clockOffset.current = data.now - Date.now()
@@ -303,7 +332,12 @@ export default function OnlinePage() {
       url.searchParams.set('room', next.id)
       window.history.replaceState(null, '', url)
     } catch {
-      setMessage('ติดต่อห้องไม่ได้ ลองอีกครั้ง')
+      setMessage(
+        translate(
+          'ติดต่อห้องไม่ได้ ลองอีกครั้ง',
+          'Could not reach the room. Try again.',
+        ),
+      )
     } finally {
       setBusy(false)
       setSendingMove(false)
@@ -311,10 +345,9 @@ export default function OnlinePage() {
     }
   }
 
-  const lastMove = useMemo(
-    () => chess.history({ verbose: true }).at(-1),
-    [chess],
-  )
+  const moves = useMemo(() => chess.history({ verbose: true }), [chess])
+  const lastMove = moves.at(-1)
+  const captures = useMemo(() => countCaptures(moves), [moves])
   const side = activeRoom?.black_id === user ? 'b' : 'w'
   const elapsed = running
     ? Math.max(
@@ -349,18 +382,28 @@ export default function OnlinePage() {
       sessionStorage.setItem('chesslens.online-review', pgn)
       location.href = '?view=review&online=1'
     } catch {
-      setMessage('ส่งเกมเข้ารีวิวไม่ได้ กรุณาเปิดให้เบราว์เซอร์บันทึกข้อมูล')
+      setMessage(
+        translate(
+          'ส่งเกมเข้ารีวิวไม่ได้ กรุณาเปิดให้เบราว์เซอร์บันทึกข้อมูล',
+          'Could not open the review. Allow your browser to store data.',
+        ),
+      )
     }
   }
 
   return (
     <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-8">
       <header className="space-y-3 mb-4">
-        <h1 className="text-2xl font-semibold sm:text-3xl">เล่นกับเพื่อน</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl">
+          {translate('เล่นกับเพื่อน', 'Play a Friend')}
+        </h1>
       </header>
       {!online && (
         <p role="status" className="panel">
-          การเชื่อมต่อหลุด · นาฬิกาเกมยังเดิน เมื่อกลับมาออนไลน์ระบบจะโหลดห้องล่าสุด
+          {translate(
+            'การเชื่อมต่อหลุด · นาฬิกาเกมยังเดิน เมื่อกลับมาออนไลน์ระบบจะโหลดห้องล่าสุด',
+            'Connection lost · The clocks are still running. The room will refresh when you reconnect.',
+          )}
         </p>
       )}
       {message && (
@@ -369,29 +412,31 @@ export default function OnlinePage() {
         </p>
       )}
       {checking ? (
-        <p role="status">กำลังตรวจบัญชี…</p>
+        <p role="status">{translate('กำลังตรวจบัญชี…', 'Checking account…')}</p>
       ) : !user ? (
         <p className="panel">
-          เข้าสู่ระบบผ่าน{' '}
+          {translate('เข้าสู่ระบบผ่าน', 'Sign in on')}{' '}
           <a
             className="text-accent underline"
             href="?view=account"
             target="_blank"
             rel="noopener noreferrer"
           >
-            บัญชี ChessLens
+            {translate('บัญชี ChessLens', 'ChessLens account')}
           </a>{' '}
-          แล้วกลับมาที่แท็บนี้
+          {translate('แล้วกลับมาที่แท็บนี้', 'and return to this tab')}
         </p>
       ) : !activeRoom ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <section className="panel space-y-3">
             <h2 className="font-semibold">
-              {id ? 'เข้าห้องที่ได้รับเชิญ' : 'สร้างห้องส่วนตัว'}
+              {id
+                ? translate('เข้าห้องที่ได้รับเชิญ', 'Join the invited room')
+                : translate('สร้างห้องส่วนตัว', 'Create private room')}
             </h2>
             {!id && (
               <label className="block">
-                เวลาต่อฝ่าย{' '}
+                {translate('เวลาต่อฝ่าย', 'Time per side')}{' '}
                 <select
                   className="control"
                   value={minutes}
@@ -399,7 +444,7 @@ export default function OnlinePage() {
                 >
                   {[3, 5, 10, 15].map((n) => (
                     <option key={n} value={n}>
-                      {n} นาที
+                      {n} {translate('นาที', 'min')}
                     </option>
                   ))}
                 </select>
@@ -410,7 +455,9 @@ export default function OnlinePage() {
               disabled={busy || !online}
               onClick={() => void send(id ? 'join' : 'create')}
             >
-              {id ? 'เข้าห้อง' : 'สร้างห้อง'}
+              {id
+                ? translate('เข้าห้อง', 'Join room')
+                : translate('สร้างห้อง', 'Create room')}
             </button>
           </section>
           {!id && (
@@ -421,14 +468,16 @@ export default function OnlinePage() {
                 if (/^[0-9A-F]{10}$/.test(normalizedCode)) void send('join')
               }}
             >
-              <h2 className="font-semibold">เข้าห้องด้วยรหัส</h2>
+              <h2 className="font-semibold">
+                {translate('เข้าห้องด้วยรหัส', 'Join with a code')}
+              </h2>
               <label className="block">
-                รหัสห้อง
+                {translate('รหัสห้อง', 'Room code')}
                 <input
                   className="control mt-1 block w-full font-mono uppercase"
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
-                  placeholder="เช่น A7F32-B0D91"
+                  placeholder={translate('เช่น A7F32-B0D91', 'E.g. A7F32-B0D91')}
                   maxLength={24}
                   autoCapitalize="characters"
                   autoComplete="off"
@@ -441,7 +490,7 @@ export default function OnlinePage() {
                   busy || !online || !/^[0-9A-F]{10}$/.test(normalizedCode)
                 }
               >
-                เข้าห้องด้วยรหัส
+                {translate('เข้าห้องด้วยรหัส', 'Join with a code')}
               </button>
             </form>
           )}
@@ -450,7 +499,7 @@ export default function OnlinePage() {
         <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <section
             className="w-full max-w-xl space-y-2"
-            aria-label="กระดานออนไลน์"
+            aria-label={translate('กระดานออนไลน์', 'Online chessboard')}
           >
             <div className="grid grid-cols-2 gap-2">
               <MatchClock
@@ -487,8 +536,12 @@ export default function OnlinePage() {
             </div>
           </section>
           <section className="panel space-y-3">
+            <CapturedPieces captures={captures} />
             <h2 className="font-semibold">
-              ห้องส่วนตัว · คุณเล่นฝ่าย{side === 'w' ? 'ขาว' : 'ดำ'}
+              {translate('ห้องส่วนตัว · คุณเล่นฝ่าย', 'Private room · Playing as ')}
+              {side === 'w'
+                ? translate('ขาว', 'White')
+                : translate('ดำ', 'Black')}
             </h2>
             <p
               role="status"
@@ -497,20 +550,27 @@ export default function OnlinePage() {
               {activeRoom.result
                 ? activeRoom.result +
                   ' · ' +
-                  (reasons[activeRoom.reason ?? ''] ?? 'จบเกม')
+                  (reasons[activeRoom.reason ?? ''] ??
+                    translate('จบเกม', 'Game over'))
                 : sendingMove
-                  ? 'กำลังส่งตาเดิน…'
+                  ? translate('กำลังส่งตาเดิน…', 'Sending move…')
                   : !activeRoom.black_id
-                    ? 'รอเพื่อนเข้าห้อง'
+                    ? translate('รอเพื่อนเข้าห้อง', 'Waiting for a friend')
                     : expired
-                      ? 'รอยืนยันผลหมดเวลา'
+                      ? translate(
+                          'รอยืนยันผลหมดเวลา',
+                          'Waiting for timeout confirmation',
+                        )
                       : chess.turn() === side
-                        ? 'ตาของคุณ'
-                        : 'รอคู่แข่งเดิน'}
+                        ? translate('ตาของคุณ', 'Your turn')
+                        : translate('รอคู่แข่งเดิน', 'Opponent’s turn')}
             </p>
             {lastMove && (
               <p className="text-sm text-secondary">
-                เดินล่าสุด · ฝ่าย{lastMove.color === 'w' ? 'ขาว' : 'ดำ'}{' '}
+                {translate('เดินล่าสุด · ฝ่าย', 'Last move · ')}
+                {lastMove.color === 'w'
+                  ? translate('ขาว', 'White')
+                  : translate('ดำ', 'Black')}{' '}
                 <strong className="font-mono text-foreground">
                   {lastMove.san}
                 </strong>
@@ -523,7 +583,10 @@ export default function OnlinePage() {
                   role="status"
                   className="text-sm font-semibold text-rose-300"
                 >
-                  เวลาของคุณเหลือ 30 วินาทีหรือน้อยกว่า
+                  {translate(
+                    'เวลาของคุณเหลือ 30 วินาทีหรือน้อยกว่า',
+                    'You have 30 seconds or less',
+                  )}
                 </p>
               )}
             {!activeRoom.black_id && (
@@ -531,7 +594,7 @@ export default function OnlinePage() {
                 {activeRoom.room_code && (
                   <div className="space-y-2">
                     <p>
-                      รหัสห้อง{' '}
+                      {translate('รหัสห้อง', 'Room code')}{' '}
                       <strong className="font-mono text-accent">
                         {activeRoom.room_code.slice(0, 5)}-
                         {activeRoom.room_code.slice(5)}
@@ -543,12 +606,21 @@ export default function OnlinePage() {
                         void navigator.clipboard
                           .writeText(activeRoom.room_code)
                           .then(
-                            () => setMessage('คัดลอกรหัสห้องแล้ว'),
-                            () => setMessage('พิมพ์รหัสที่แสดงให้เพื่อนได้เลย'),
+                            () =>
+                              setMessage(
+                                translate('คัดลอกรหัสห้องแล้ว', 'Room code copied'),
+                              ),
+                            () =>
+                              setMessage(
+                                translate(
+                                  'พิมพ์รหัสที่แสดงให้เพื่อนได้เลย',
+                                  'You can share the room code shown above with your friend',
+                                ),
+                              ),
                           )
                       }
                     >
-                      คัดลอกรหัสห้อง
+                      {translate('คัดลอกรหัสห้อง', 'Copy room code')}
                     </button>
                   </div>
                 )}
@@ -556,15 +628,27 @@ export default function OnlinePage() {
                   className="control primary-control"
                   onClick={() =>
                     void navigator.clipboard.writeText(location.href).then(
-                      () => setMessage('คัดลอกลิงก์แล้ว'),
-                      () => setMessage('คัดลอก URL จากแถบที่อยู่ของเบราว์เซอร์ได้เลย'),
+                      () =>
+                        setMessage(
+                          translate('คัดลอกลิงก์แล้ว', 'Invite link copied'),
+                        ),
+                      () =>
+                        setMessage(
+                          translate(
+                            'คัดลอก URL จากแถบที่อยู่ของเบราว์เซอร์ได้เลย',
+                            'Copy the URL from the browser address bar',
+                          ),
+                        ),
                     )
                   }
                 >
-                  คัดลอกลิงก์เชิญ
+                  {translate('คัดลอกลิงก์เชิญ', 'Copy invite link')}
                 </button>
                 <p className="text-sm text-secondary">
-                  ส่งรหัสห้องหรือลิงก์ให้เพื่อนที่มีบัญชี ChessLens คนแรกที่กดเข้าห้องจะได้ฝั่งดำ
+                  {translate(
+                    'ส่งรหัสห้องหรือลิงก์ให้เพื่อนที่มีบัญชี ChessLens คนแรกที่กดเข้าห้องจะได้ฝั่งดำ',
+                    'Send the room code or link to a friend with a ChessLens account. The first to join plays Black.',
+                  )}
                 </p>
               </>
             )}
@@ -573,12 +657,15 @@ export default function OnlinePage() {
                 <MatchResult
                   key={activeRoom.id}
                   result={activeRoom.result}
-                  reason={reasons[activeRoom.reason ?? ''] ?? 'จบเกม'}
+                  reason={
+                    reasons[activeRoom.reason ?? ''] ??
+                    translate('จบเกม', 'Game over')
+                  }
                   side={side}
                   onReview={lastMove ? review : undefined}
                 />
                 <a href="?view=online" className="control">
-                  สร้างห้องใหม่
+                  {translate('สร้างห้องใหม่', 'Create a new room')}
                 </a>
               </div>
             ) : (
@@ -587,10 +674,15 @@ export default function OnlinePage() {
                   className="control"
                   disabled={busy || !online}
                   onClick={() => {
-                    if (window.confirm('ยืนยันยอมแพ้เกมนี้?')) void send('resign')
+                    if (
+                      window.confirm(
+                        translate('ยืนยันยอมแพ้เกมนี้?', 'Resign this game?'),
+                      )
+                    )
+                      void send('resign')
                   }}
                 >
-                  ยอมแพ้
+                  {translate('ยอมแพ้', 'Resign')}
                 </button>
               )
             )}

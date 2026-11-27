@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { PublicImport } from './PublicImport'
 import { useState } from 'react'
 import { importGames } from '../../analysis/pgn'
@@ -21,7 +22,13 @@ type Props = {
 
 const maxPgnSize = 2 * 1024 * 1024
 
-export function Import({ initialPgn = '', busy, cached, onRestore, onAnalyze }: Props) {
+export function Import({
+  initialPgn = '',
+  busy,
+  cached,
+  onRestore,
+  onAnalyze,
+}: Props) {
   const [input, setInput] = useState(initialPgn)
   const [games, setGames] = useState<ImportedGame[]>([])
   const [selected, setSelected] = useState(0)
@@ -128,7 +135,7 @@ export function Import({ initialPgn = '', busy, cached, onRestore, onAnalyze }: 
             <div className="flex flex-wrap items-end gap-2">
               {games.length > 1 && (
                 <label className="text-sm">
-                  กรองเกม
+                  {translate('กรองเกม', 'Filter games')}
                   <input
                     className="control mt-1 block w-full"
                     value={filter}
@@ -188,7 +195,7 @@ export function Import({ initialPgn = '', busy, cached, onRestore, onAnalyze }: 
                 </select>
               </label>
               <label className="text-sm">
-                จำนวนแนวเดิน
+                {translate('จำนวนแนวเดิน', 'Number of lines')}
                 <select
                   className="control mt-1 block"
                   value={multiPV}

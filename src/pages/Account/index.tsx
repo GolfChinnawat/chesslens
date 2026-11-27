@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { cloud } from '../../lib/cloud'
@@ -38,12 +39,24 @@ export default function AccountPage() {
           })
         : await cloud.auth.signInWithPassword(credentials)
       if (response.error) throw response.error
-      if (signup && !response.data.session) setMessage('ตรวจอีเมลเพื่อยืนยันบัญชี')
+      if (signup && !response.data.session)
+        setMessage(
+          translate(
+            'ตรวจอีเมลเพื่อยืนยันบัญชี',
+            'Check your email to confirm your account',
+          ),
+        )
     } catch {
       setMessage(
         signup
-          ? 'สมัครสมาชิกไม่สำเร็จ กรุณาลองอีกครั้ง'
-          : 'เข้าสู่ระบบไม่ได้ ตรวจอีเมลและรหัสผ่าน',
+          ? translate(
+              'สมัครสมาชิกไม่สำเร็จ กรุณาลองอีกครั้ง',
+              'Could not sign up. Try again.',
+            )
+          : translate(
+              'เข้าสู่ระบบไม่ได้ ตรวจอีเมลและรหัสผ่าน',
+              'Could not sign in. Check your email and password.',
+            ),
       )
     } finally {
       setBusy(false)
@@ -60,27 +73,45 @@ export default function AccountPage() {
       })
       if (error) throw error
     } catch {
-      setMessage('เข้าสู่ระบบด้วย Google ไม่สำเร็จ')
+      setMessage(
+        translate(
+          'เข้าสู่ระบบด้วย Google ไม่สำเร็จ',
+          'Could not sign in with Google',
+        ),
+      )
       setBusy(false)
     }
   }
   return (
     <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
       <header className="space-y-3 mb-4">
-        <h1 className="text-2xl font-semibold sm:text-3xl">บัญชี ChessLens</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl">
+          {translate('บัญชี ChessLens', 'ChessLens account')}
+        </h1>
       </header>
       {!cloud ? (
-        <p className="panel">คลังเกมออนไลน์ยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์</p>
+        <p className="panel">
+          {translate(
+            'คลังเกมออนไลน์ยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์',
+            'The online game library is unavailable',
+          )}
+        </p>
       ) : session === undefined ? (
-        <p role="status">กำลังตรวจสอบการเข้าสู่ระบบ…</p>
+        <p role="status">
+          {translate('กำลังตรวจสอบการเข้าสู่ระบบ…', 'Checking sign-in…')}
+        </p>
       ) : session ? (
         <Library key={session.user.id} session={session} />
       ) : (
         <section className="panel max-w-md space-y-3">
-          <h2 className="font-semibold">{signup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}</h2>
+          <h2 className="font-semibold">
+            {signup
+              ? translate('สมัครสมาชิก', 'Sign up')
+              : translate('เข้าสู่ระบบ', 'Sign in')}
+          </h2>
           <form onSubmit={(event) => void login(event)} className="space-y-3">
             <label className="block">
-              อีเมล
+              {translate('อีเมล', 'Email')}
               <input
                 className="control mt-1 block w-full"
                 type="email"
@@ -91,7 +122,7 @@ export default function AccountPage() {
               />
             </label>
             <label className="block">
-              รหัสผ่าน
+              {translate('รหัสผ่าน', 'Password')}
               <input
                 className="control mt-1 block w-full"
                 type="password"
@@ -103,7 +134,9 @@ export default function AccountPage() {
               />
             </label>
             <button className="control primary-control" disabled={busy}>
-              {signup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+              {signup
+                ? translate('สมัครสมาชิก', 'Sign up')
+                : translate('เข้าสู่ระบบ', 'Sign in')}
             </button>
           </form>
           <div className="flex flex-wrap gap-2">
@@ -115,14 +148,16 @@ export default function AccountPage() {
                 setMessage('')
               }}
             >
-              {signup ? 'กลับไปเข้าสู่ระบบ' : 'สร้างบัญชีใหม่'}
+              {signup
+                ? translate('กลับไปเข้าสู่ระบบ', 'Back to sign in')
+                : translate('สร้างบัญชีใหม่', 'Create an account')}
             </button>
             <button
               className="control"
               disabled={busy}
               onClick={() => void google()}
             >
-              เข้าสู่ระบบด้วย Google
+              {translate('เข้าสู่ระบบด้วย Google', 'Sign in with Google')}
             </button>
           </div>
           {message && <p role="status">{message}</p>}

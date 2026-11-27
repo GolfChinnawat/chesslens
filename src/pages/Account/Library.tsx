@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { accountStats } from '../../analysis/account-stats'
 import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
@@ -107,7 +108,10 @@ export function Library({ session }: { session: Session }) {
         setReady(true)
       })
       .catch(() => {
-        if (!controller.signal.aborted) setMessage('โหลดคลังเกมไม่สำเร็จ')
+        if (!controller.signal.aborted)
+          setMessage(
+            translate('โหลดคลังเกมไม่สำเร็จ', 'Could not load the game library'),
+          )
       })
     return () => controller.abort()
   }, [version])
@@ -124,7 +128,12 @@ export function Library({ session }: { session: Session }) {
       setMessage(success)
       if (reload) refresh((value) => value + 1)
     } catch {
-      setMessage('ทำรายการไม่สำเร็จ กรุณาลองอีกครั้ง')
+      setMessage(
+        translate(
+          'ทำรายการไม่สำเร็จ กรุณาลองอีกครั้ง',
+          'Could not complete the action. Try again.',
+        ),
+      )
     } finally {
       setBusy(false)
     }
@@ -183,7 +192,7 @@ export function Library({ session }: { session: Session }) {
   return (
     <div className="space-y-4">
       <section className="panel space-y-3">
-        <h2 className="font-semibold">โปรไฟล์</h2>
+        <h2 className="font-semibold">{translate('โปรไฟล์', 'Profile')}</h2>
         <p className="break-all text-sm">{session.user.email}</p>
         <form
           className="flex flex-wrap gap-2"
@@ -192,16 +201,19 @@ export function Library({ session }: { session: Session }) {
             const display_name = String(
               new FormData(event.currentTarget).get('name'),
             ).trim()
-            void run(async () => {
-              const { error } = await cloud!
-                .from('settings')
-                .upsert({ user_id: session.user.id, display_name })
-              if (error) throw error
-            }, 'บันทึกโปรไฟล์แล้ว')
+            void run(
+              async () => {
+                const { error } = await cloud!
+                  .from('settings')
+                  .upsert({ user_id: session.user.id, display_name })
+                if (error) throw error
+              },
+              translate('บันทึกโปรไฟล์แล้ว', 'Profile saved'),
+            )
           }}
         >
           <label>
-            ชื่อที่ใช้เล่นหมากรุก{' '}
+            {translate('ชื่อที่ใช้เล่นหมากรุก', 'Chess username')}{' '}
             <input
               key={name}
               defaultValue={name}
@@ -211,7 +223,7 @@ export function Library({ session }: { session: Session }) {
             />
           </label>
           <button className="control" disabled={busy || !ready}>
-            บันทึก
+            {translate('บันทึก', 'Save')}
           </button>
         </form>
         <div className="flex flex-wrap gap-2">
@@ -229,7 +241,7 @@ export function Library({ session }: { session: Session }) {
               )
             }
           >
-            ออกจากระบบ
+            {translate('ออกจากระบบ', 'Sign out')}
           </button>
           <button
             className="control"
@@ -251,7 +263,7 @@ export function Library({ session }: { session: Session }) {
               )
             }
           >
-            ส่งออก JSON
+            {translate('ส่งออก JSON', 'Export JSON')}
           </button>
           <button
             className="control"
@@ -264,25 +276,33 @@ export function Library({ session }: { session: Session }) {
               )
             }
           >
-            ส่งออก PGN
+            {translate('ส่งออก PGN', 'Export PGN')}
           </button>
           <button
             className="control"
             disabled={busy}
             onClick={() => {
-              if (!window.confirm('ลบบัญชีและข้อมูลออนไลน์ทั้งหมดอย่างถาวร?')) return
+              if (
+                !window.confirm(
+                  translate(
+                    'ลบบัญชีและข้อมูลออนไลน์ทั้งหมดอย่างถาวร?',
+                    'Permanently delete your account and all online data?',
+                  ),
+                )
+              )
+                return
               void run(
                 async () => {
                   const { error } = await cloud!.rpc('delete_my_account')
                   if (error) throw error
                   await cloud!.auth.signOut({ scope: 'local' })
                 },
-                'ลบบัญชีแล้ว',
+                translate('ลบบัญชีแล้ว', 'Account deleted'),
                 false,
               )
             }}
           >
-            ลบบัญชี
+            {translate('ลบบัญชี', 'Delete account')}
           </button>
         </div>
       </section>
@@ -292,31 +312,45 @@ export function Library({ session }: { session: Session }) {
             className="control"
             disabled={busy}
             onClick={() =>
-              void run(async () => {
-                for (const review of local)
-                  await saveCloudReview(review, 'local')
-                setImported(true)
-              }, 'นำเข้ารีวิวจากเครื่องนี้แล้ว')
+              void run(
+                async () => {
+                  for (const review of local)
+                    await saveCloudReview(review, 'local')
+                  setImported(true)
+                },
+                translate('นำเข้ารีวิวจากเครื่องนี้แล้ว', 'Local review imported'),
+              )
             }
           >
-            นำเข้ารีวิวจากเครื่องนี้ ({local.length})
+            {translate('นำเข้ารีวิวจากเครื่องนี้ (', 'Import local review (')}
+            {local.length})
           </button>
         </section>
       )}
       {message && <p role="status">{message}</p>}
       <section className="panel space-y-3">
-        <h2 className="font-semibold">สถิติของฉัน</h2>
+        <h2 className="font-semibold">{translate('สถิติของฉัน', 'My stats')}</h2>
         {!stats.trend.length ? (
           <p className="text-sm">
-            ยังไม่มีรีวิวที่ระบุฝ่ายของคุณ ตั้งชื่อในโปรไฟล์ให้ตรงกับชื่อใน PGN
+            {translate(
+              'ยังไม่มีรีวิวที่ระบุฝ่ายของคุณ ตั้งชื่อในโปรไฟล์ให้ตรงกับชื่อใน PGN',
+              'No reviews identify your side yet. Match your profile name to your name in the PGN.',
+            )}
           </p>
         ) : (
           <>
             <p>
-              ขาว ชนะ / เสมอ / แพ้: {stats.outcomes.w.join(' / ')} · ดำ:{' '}
+              {translate('ขาว ชนะ / เสมอ / แพ้:', 'White W / D / L:')}{' '}
+              {stats.outcomes.w.join(' / ')} {translate('· ดำ:', '· Black:')}{' '}
               {stats.outcomes.b.join(' / ')}
             </p>
-            <div className="h-44" aria-label="ความแม่นยำตามลำดับเกม">
+            <div
+              className="h-44"
+              aria-label={translate(
+                'ความแม่นยำตามลำดับเกม',
+                'Accuracy over time',
+              )}
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={stats.trend}>
                   <XAxis dataKey="game" />
@@ -332,12 +366,12 @@ export function Library({ session }: { session: Session }) {
               </ResponsiveContainer>
             </div>
             <p className="text-sm">
-              อัตรา Blunder ·{' '}
+              {translate('อัตรา Blunder ·', 'Blunder rate ·')}{' '}
               {(
                 [
-                  ['opening', 'เปิดเกม'],
-                  ['middle', 'กลางเกม'],
-                  ['end', 'ท้ายเกม'],
+                  ['opening', translate('เปิดเกม', 'Opening')],
+                  ['middle', translate('กลางเกม', 'Middlegame')],
+                  ['end', translate('ท้ายเกม', 'Endgame')],
                 ] as const
               )
                 .map(([id, label]) => {
@@ -355,12 +389,15 @@ export function Library({ session }: { session: Session }) {
             {stats.trend.some(({ rating }) => rating !== null) && (
               <details>
                 <summary className="cursor-pointer">
-                  เรตเกมประมาณการเทียบกับ Accuracy
+                  {translate(
+                    'เรตเกมประมาณการเทียบกับ Accuracy',
+                    'Estimated game rating vs. accuracy',
+                  )}
                 </summary>
                 <ol className="mt-2 max-h-40 overflow-auto text-sm">
                   {stats.trend.map(({ game, accuracy, rating }) => (
                     <li key={game}>
-                      เกม {game} · {rating ?? '—'} /{' '}
+                      {translate('เกม', 'Games')} {game} · {rating ?? '—'} /{' '}
                       {accuracy?.toFixed(1) ?? '—'}%
                     </li>
                   ))}
@@ -371,8 +408,10 @@ export function Library({ session }: { session: Session }) {
               <ul className="text-sm">
                 {stats.openings.map(([opening, { games, points }]) => (
                   <li key={opening}>
-                    {opening} · {games} เกม · ได้{' '}
-                    {((points / games) * 100).toFixed(1)}% ของคะแนน
+                    {opening} · {games}{' '}
+                    {translate('เกม · ได้', 'games · scored')}{' '}
+                    {((points / games) * 100).toFixed(1)}
+                    {translate('% ของคะแนน', '% of points')}
                   </li>
                 ))}
               </ul>
@@ -381,22 +420,27 @@ export function Library({ session }: { session: Session }) {
         )}
       </section>
       <section className="panel space-y-3">
-        <h2 className="font-semibold">คลังเกมของฉัน</h2>
+        <h2 className="font-semibold">
+          {translate('คลังเกมของฉัน', 'My game library')}
+        </h2>
         <div className="flex flex-wrap gap-2">
           <input
-            aria-label="ค้นหาคลังเกม"
-            placeholder="ชื่อผู้เล่นหรือชื่อเปิดเกม"
+            aria-label={translate('ค้นหาคลังเกม', 'Search game library')}
+            placeholder={translate(
+              'ชื่อผู้เล่นหรือชื่อเปิดเกม',
+              'Player or opening name',
+            )}
             className="control"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <select
-            aria-label="กรองผลเกม"
+            aria-label={translate('กรองผลเกม', 'Filter results')}
             className="control"
             value={result}
             onChange={(event) => setResult(event.target.value)}
           >
-            <option value="">ทุกผลเกม</option>
+            <option value="">{translate('ทุกผลเกม', 'All results')}</option>
             <option>1-0</option>
             <option>0-1</option>
             <option>1/2-1/2</option>
@@ -407,10 +451,16 @@ export function Library({ session }: { session: Session }) {
               checked={mistakes}
               onChange={(event) => setMistakes(event.target.checked)}
             />{' '}
-            มี Mistake หรือ Blunder
+            {translate('มี Mistake หรือ Blunder', 'Has a mistake or blunder')}
           </label>
         </div>
-        {!filtered.length && <p>{ready ? 'ไม่พบเกม' : 'กำลังโหลด…'}</p>}
+        {!filtered.length && (
+          <p>
+            {ready
+              ? translate('ไม่พบเกม', 'No games found')
+              : translate('กำลังโหลด…', 'Loading…')}
+          </p>
+        )}
         {filtered.map(({ row, review }) => (
           <div
             className="flex flex-wrap items-center gap-2 border-t border-line pt-2"
@@ -422,37 +472,43 @@ export function Library({ session }: { session: Session }) {
             </span>
             {review && (
               <button className="control" onClick={() => setOpen(review)}>
-                เปิดรีวิว
+                {translate('เปิดรีวิว', 'Open review')}
               </button>
             )}
             {review && (
               <select
-                aria-label="วิเคราะห์เกมใหม่ที่ความลึก"
+                aria-label={translate(
+                  'วิเคราะห์เกมใหม่ที่ความลึก',
+                  'Reanalyze game at depth',
+                )}
                 className="control"
                 disabled={busy}
                 value=""
                 onChange={(event) => {
                   const depth = Number(event.target.value) as ReviewDepth
                   if (!depth) return
-                  void run(async () => {
-                    const engine = new StockfishEngine()
-                    try {
-                      const next = await analyzeGame(
-                        engine,
-                        review.game,
-                        depth,
-                        new AbortController().signal,
-                        () => {},
-                      )
-                      await saveCloudReview(next)
-                      setOpen(next)
-                    } finally {
-                      engine.destroy()
-                    }
-                  }, 'วิเคราะห์และบันทึกแล้ว')
+                  void run(
+                    async () => {
+                      const engine = new StockfishEngine()
+                      try {
+                        const next = await analyzeGame(
+                          engine,
+                          review.game,
+                          depth,
+                          new AbortController().signal,
+                          () => {},
+                        )
+                        await saveCloudReview(next)
+                        setOpen(next)
+                      } finally {
+                        engine.destroy()
+                      }
+                    },
+                    translate('วิเคราะห์และบันทึกแล้ว', 'Reanalyzed and saved'),
+                  )
                 }}
               >
-                <option value="">วิเคราะห์ใหม่</option>
+                <option value="">{translate('วิเคราะห์ใหม่', 'Reanalyze')}</option>
                 {[12, 16, 18, 20].map((depth) => (
                   <option key={depth}>{depth}</option>
                 ))}
@@ -462,30 +518,43 @@ export function Library({ session }: { session: Session }) {
               className="control"
               disabled={busy}
               onClick={() => {
-                if (!window.confirm('ลบเกมนี้ออกจากคลัง?')) return
-                void run(async () => {
-                  const { error } = await cloud!
-                    .from('games')
-                    .delete()
-                    .eq('id', row.id)
-                  if (error) throw error
-                  setOpen(undefined)
-                }, 'ลบเกมแล้ว')
+                if (
+                  !window.confirm(
+                    translate(
+                      'ลบเกมนี้ออกจากคลัง?',
+                      'Remove this game from your library?',
+                    ),
+                  )
+                )
+                  return
+                void run(
+                  async () => {
+                    const { error } = await cloud!
+                      .from('games')
+                      .delete()
+                      .eq('id', row.id)
+                    if (error) throw error
+                    setOpen(undefined)
+                  },
+                  translate('ลบเกมแล้ว', 'Game deleted'),
+                )
               }}
             >
-              ลบเกม
+              {translate('ลบเกม', 'Delete game')}
             </button>
           </div>
         ))}
       </section>
       <section className="panel space-y-3">
-        <h2 className="font-semibold">ชุดฝึกตามกำหนด</h2>
+        <h2 className="font-semibold">
+          {translate('ชุดฝึกตามกำหนด', 'Scheduled practice')}
+        </h2>
         <Training cards={cards} onDone={() => refresh((value) => value + 1)} />
       </section>
       {open && (
         <section>
           <button className="control mb-3" onClick={() => setOpen(undefined)}>
-            ปิดรีวิว
+            {translate('ปิดรีวิว', 'Close review')}
           </button>
           <ReviewBoard key={open.game.pgn + open.depth} review={open} />
         </section>

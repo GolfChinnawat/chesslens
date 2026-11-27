@@ -65,11 +65,21 @@ const values: Record<PieceSymbol, number> = {
   k: 0,
 }
 
-export function summarizeMaterial(moves: Move[], fen: string) {
+export function countCaptures(
+  moves: readonly Pick<Move, 'captured' | 'color'>[],
+) {
   const captures: Record<Color, PieceSymbol[]> = { w: [], b: [] }
   for (const move of moves) {
     if (move.captured) captures[move.color].push(move.captured)
   }
+  const order = 'qrbnpk'
+  for (const color of ['w', 'b'] as const) {
+    captures[color].sort((a, b) => order.indexOf(a) - order.indexOf(b))
+  }
+  return captures
+}
+
+export function summarizeMaterial(moves: Move[], fen: string) {
   const balance = new Chess(fen)
     .board()
     .flat()
@@ -77,9 +87,5 @@ export function summarizeMaterial(moves: Move[], fen: string) {
       if (!piece) return sum
       return sum + values[piece.type] * (piece.color === 'w' ? 1 : -1)
     }, 0)
-  const order = 'qrbnpk'
-  for (const color of ['w', 'b'] as const) {
-    captures[color].sort((a, b) => order.indexOf(a) - order.indexOf(b))
-  }
-  return { captures, balance }
+  return { captures: countCaptures(moves), balance }
 }

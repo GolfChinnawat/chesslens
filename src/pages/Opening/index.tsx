@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { Chess, type Color } from 'chess.js'
 import { useMemo, useState, type FormEvent } from 'react'
 import {
@@ -101,7 +102,12 @@ export default function OpeningPage() {
       localStorage.setItem(storageKey, JSON.stringify(next))
       return true
     } catch {
-      setMessage('พื้นที่จัดเก็บไม่พร้อมใช้งาน ผลฝึกจะอยู่จนกว่าจะปิดหน้านี้')
+      setMessage(
+        translate(
+          'พื้นที่จัดเก็บไม่พร้อมใช้งาน ผลฝึกจะอยู่จนกว่าจะปิดหน้านี้',
+          'Storage is unavailable. Practice progress lasts until you close this page.',
+        ),
+      )
       return false
     }
   }
@@ -110,16 +116,30 @@ export default function OpeningPage() {
     try {
       const imported = openingLines(text, side)
       if (!imported.length) {
-        setMessage('ไม่พบตาของฝ่ายที่เลือกจากตำแหน่งเริ่มเกมมาตรฐาน')
+        setMessage(
+          translate(
+            'ไม่พบตาของฝ่ายที่เลือกจากตำแหน่งเริ่มเกมมาตรฐาน',
+            'No moves were found for that side from the standard starting position',
+          ),
+        )
         return
       }
       setNow(Date.now())
       setSelected('')
       setFeedback(undefined)
       if (save({ ...data, pgn: text, side }))
-        setMessage('พร้อมฝึก ' + imported.length + ' ไลน์')
+        setMessage(
+          translate('พร้อมฝึก ', 'Ready to practice ') +
+            imported.length +
+            translate(' ไลน์', ' opening line(s)'),
+        )
     } catch {
-      setMessage('อ่าน PGN ไม่สำเร็จ ตรวจรูปแบบและขนาดไฟล์ (ไม่เกิน 500 KB)')
+      setMessage(
+        translate(
+          'อ่าน PGN ไม่สำเร็จ ตรวจรูปแบบและขนาดไฟล์ (ไม่เกิน 500 KB)',
+          'Could not read PGN. Check the format and file size (up to 500 KB).',
+        ),
+      )
     }
   }
 
@@ -143,16 +163,29 @@ export default function OpeningPage() {
         correct,
         text: correct
           ? (played.lan === position.uci
-              ? 'ตรงไลน์ · '
-              : 'ใช้ได้ในอีกไลน์ของชุดฝึก · ') + played.san
-          : 'เดินได้ แต่นอก' +
-            (mode === 'line' ? 'ไลน์ที่เลือก' : 'ชุดฝึก') +
-            ' · ตาตัวอย่าง ' +
+              ? translate('ตรงไลน์ · ', 'On the selected line · ')
+              : translate(
+                  'ใช้ได้ในอีกไลน์ของชุดฝึก · ',
+                  'Matches another line in this set · ',
+                )) + played.san
+          : translate('เดินได้ แต่นอก', 'Legal move, outside the') +
+            (mode === 'line'
+              ? translate('ไลน์ที่เลือก', 'selected line')
+              : translate('ชุดฝึก', 'practice set')) +
+            translate(' · ตาตัวอย่าง ', ' · Example move ') +
             position.san +
-            ' · ทบทวนอีกครั้งใน 10 นาที',
+            translate(
+              ' · ทบทวนอีกครั้งใน 10 นาที',
+              ' · Review again in 10 minutes',
+            ),
       })
     } catch {
-      setMessage('ลองใส่ตาที่เดินได้ เช่น Nf3 หรือ g1f3')
+      setMessage(
+        translate(
+          'ลองใส่ตาที่เดินได้ เช่น Nf3 หรือ g1f3',
+          'Enter a legal move, such as Nf3 or g1f3',
+        ),
+      )
     }
   }
 
@@ -163,14 +196,21 @@ export default function OpeningPage() {
 
   return (
     <main className="opening">
-
       <div className="opening-intro">
-        <h1>ฝึกเปิดเกม</h1>
-        <p>ซ้อมไลน์จากเกมของคุณ แล้วกลับมาทบทวนตาที่ถึงกำหนด</p>
+        <h1>{translate('ฝึกเปิดเกม', 'Openings')}</h1>
+        <p>
+          {translate(
+            'ซ้อมไลน์จากเกมของคุณ แล้วกลับมาทบทวนตาที่ถึงกำหนด',
+            'Practice lines from your games and come back when moves are due for review.',
+          )}
+        </p>
       </div>
 
       <div className="opening-workspace" data-training={!!line}>
-        <section className="opening-board" aria-label="กระดานฝึกเปิดเกม">
+        <section
+          className="opening-board"
+          aria-label={translate('กระดานฝึกเปิดเกม', 'Opening practice board')}
+        >
           <div className="opening-board-frame">
             <PlayBoard
               game={game}
@@ -192,13 +232,18 @@ export default function OpeningPage() {
               aria-labelledby="opening-practice"
             >
               <div className="opening-card-heading">
-                <h2 id="opening-practice">ชุดฝึกของคุณ</h2>
+                <h2 id="opening-practice">
+                  {translate('ชุดฝึกของคุณ', 'Your practice set')}
+                </h2>
                 <span className="opening-side">
-                  ฝ่าย{data.side === 'w' ? 'ขาว' : 'ดำ'}
+                  {translate('ฝ่าย', 'Side: ')}
+                  {data.side === 'w'
+                    ? translate('ขาว', 'White')
+                    : translate('ดำ', 'Black')}
                 </span>
               </div>
               <label className="opening-field">
-                ไลน์ที่ฝึก
+                {translate('ไลน์ที่ฝึก', 'Line to practice')}
                 <select
                   className="control"
                   value={line.id}
@@ -211,14 +256,14 @@ export default function OpeningPage() {
                 >
                   {lines.map((entry, i) => (
                     <option key={entry.id} value={entry.id}>
-                      ไลน์ {i + 1}
+                      {translate('ไลน์', 'Line')} {i + 1}
                       {entry.label && ' · ' + entry.label}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="opening-field">
-                โหมดฝึก
+                {translate('โหมดฝึก', 'Practice mode')}
                 <select
                   className="control"
                   value={mode}
@@ -233,17 +278,33 @@ export default function OpeningPage() {
                     })
                   }}
                 >
-                  <option value="repertoire">ยืดหยุ่น · รับทุกไลน์ที่นำเข้า</option>
-                  <option value="line">จำไลน์ · รับเฉพาะไลน์ที่เลือก</option>
+                  <option value="repertoire">
+                    {translate(
+                      'ยืดหยุ่น · รับทุกไลน์ที่นำเข้า',
+                      'Flexible · Accept all imported lines',
+                    )}
+                  </option>
+                  <option value="line">
+                    {translate(
+                      'จำไลน์ · รับเฉพาะไลน์ที่เลือก',
+                      'Memorize · Accept only the selected line',
+                    )}
+                  </option>
                 </select>
               </label>
               <p className="opening-hint">
-                คะแนนวัดว่าตรงกับ{mode === 'line' ? 'ไลน์ที่เลือก' : 'ชุดฝึก'}{' '}
-                จากตำแหน่งเดียวกัน
+                {translate(
+                  'คะแนนวัดว่าตรงกับ',
+                  'Your score measures how often you match the',
+                )}
+                {mode === 'line'
+                  ? translate('ไลน์ที่เลือก', 'selected line')
+                  : translate('ชุดฝึก', 'practice set')}{' '}
+                {translate('จากตำแหน่งเดียวกัน', 'from the same position')}
               </p>
               {totals && (
                 <p className="opening-accuracy">
-                  ตอบตรงตามเกณฑ์{' '}
+                  {translate('ตอบตรงตามเกณฑ์', 'Accepted moves')}{' '}
                   <strong>
                     {totals.attempts
                       ? Math.round((100 * totals.correct) / totals.attempts) +
@@ -270,7 +331,7 @@ export default function OpeningPage() {
                         setNow(Date.now())
                       }}
                     >
-                      ตาถัดไป
+                      {translate('ตาถัดไป', 'Next move')}
                     </button>
                   </div>
                 ) : ready ? (
@@ -279,28 +340,40 @@ export default function OpeningPage() {
                     className="opening-move"
                     onSubmit={submit}
                   >
-                    <p>เดินบนกระดานหรือพิมพ์ตาที่ต้องการ</p>
+                    <p>
+                      {translate(
+                        'เดินบนกระดานหรือพิมพ์ตาที่ต้องการ',
+                        'Play a move on the board or enter it below',
+                      )}
+                    </p>
                     <label className="opening-field">
-                      ตาที่เดิน
+                      {translate('ตาที่เดิน', 'Your move')}
                       <input
                         name="move"
                         className="control"
-                        placeholder="เช่น Nf3"
+                        placeholder={translate('เช่น Nf3', 'E.g. Nf3')}
                         maxLength={12}
                         autoComplete="off"
                         required
                       />
                     </label>
-                    <button className="control primary-control">ตอบ</button>
+                    <button className="control primary-control">
+                      {translate('ตอบ', 'Submit')}
+                    </button>
                   </form>
                 ) : (
                   <div className="opening-result">
-                    <p>ไลน์นี้ไม่มีตาที่ถึงกำหนดฝึกแล้ว</p>
+                    <p>
+                      {translate(
+                        'ไลน์นี้ไม่มีตาที่ถึงกำหนดฝึกแล้ว',
+                        'No moves are due in this line',
+                      )}
+                    </p>
                     <button
                       className="control"
                       onClick={() => setNow(Date.now())}
                     >
-                      ตรวจรอบฝึกอีกครั้ง
+                      {translate('ตรวจรอบฝึกอีกครั้ง', 'Check for due moves again')}
                     </button>
                   </div>
                 )}
@@ -322,10 +395,14 @@ export default function OpeningPage() {
             }}
           >
             <div className="opening-card-heading">
-              <h2>{line ? 'เปลี่ยนชุดฝึก' : 'สร้างชุดฝึก'}</h2>
+              <h2>
+                {line
+                  ? translate('เปลี่ยนชุดฝึก', 'Change practice set')
+                  : translate('สร้างชุดฝึก', 'Create practice set')}
+              </h2>
             </div>
             <label className="opening-field">
-              PGN สำหรับฝึก
+              {translate('PGN สำหรับฝึก', 'Practice PGN')}
               <textarea
                 className="control"
                 rows={4}
@@ -335,25 +412,45 @@ export default function OpeningPage() {
                 onChange={(event) => setPgn(event.target.value)}
               />
             </label>
-            <p className="opening-hint">ใช้ 8 ตาแรกต่อฝ่าย · ไฟล์ไม่เกิน 500 KB</p>
+            <p className="opening-hint">
+              {translate(
+                'ใช้ 8 ตาแรกต่อฝ่าย · ไฟล์ไม่เกิน 500 KB',
+                'Uses the first eight moves per side · Files up to 500 KB',
+              )}
+            </p>
             <label className="opening-file">
               <input
                 type="file"
                 accept=".pgn"
-                aria-label="เปิดไฟล์ PGN"
+                aria-label={translate('เปิดไฟล์ PGN', 'Open PGN file')}
                 onChange={async (event) => {
                   const file = event.target.files?.[0]
                   event.target.value = ''
                   if (!file) return
                   if (file.size > maxOpeningPgnSize) {
-                    setMessage('ไฟล์ต้องไม่เกิน 500 KB')
+                    setMessage(
+                      translate(
+                        'ไฟล์ต้องไม่เกิน 500 KB',
+                        'File must be no larger than 500 KB',
+                      ),
+                    )
                     return
                   }
                   try {
                     setPgn(await file.text())
-                    setMessage('เลือกไฟล์แล้ว กดสร้างชุดฝึกเพื่อเริ่ม')
+                    setMessage(
+                      translate(
+                        'เลือกไฟล์แล้ว กดสร้างชุดฝึกเพื่อเริ่ม',
+                        'File selected. Create a practice set to begin.',
+                      ),
+                    )
                   } catch {
-                    setMessage('เปิดไฟล์ PGN ไม่สำเร็จ')
+                    setMessage(
+                      translate(
+                        'เปิดไฟล์ PGN ไม่สำเร็จ',
+                        'Could not open PGN file',
+                      ),
+                    )
                   }
                 }}
               />
@@ -364,12 +461,12 @@ export default function OpeningPage() {
                 className="opening-link"
                 onClick={() => setPgn('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 *')}
               >
-                ใช้ PGN ตัวอย่าง
+                {translate('ใช้ PGN ตัวอย่าง', 'Use sample PGN')}
               </button>
             )}
             <div className="opening-import-actions">
               <label className="opening-field">
-                ฝ่ายที่ฝึก
+                {translate('ฝ่ายที่ฝึก', 'Side to practice')}
                 <select
                   className="control"
                   value={side}
@@ -377,15 +474,15 @@ export default function OpeningPage() {
                     setSide(event.target.value === 'b' ? 'b' : 'w')
                   }
                 >
-                  <option value="w">ขาว</option>
-                  <option value="b">ดำ</option>
+                  <option value="w">{translate('ขาว', 'White')}</option>
+                  <option value="b">{translate('ดำ', 'Black')}</option>
                 </select>
               </label>
               <button
                 className="control primary-control"
                 disabled={!pgn.trim()}
               >
-                สร้างชุดฝึก
+                {translate('สร้างชุดฝึก', 'Create practice set')}
               </button>
             </div>
             {!!reviews.length && (
@@ -397,14 +494,19 @@ export default function OpeningPage() {
                     ...new Set(reviews.map((review) => review.game.pgn)),
                   ].join('\n\n')
                   if (imported.length > maxOpeningPgnSize) {
-                    setMessage('PGN รวมเกิน 500 KB ลองนำเข้าทีละไฟล์')
+                    setMessage(
+                      translate(
+                        'PGN รวมเกิน 500 KB ลองนำเข้าทีละไฟล์',
+                        'Combined PGN exceeds 500 KB. Try importing one file at a time.',
+                      ),
+                    )
                     return
                   }
                   setPgn(imported)
                   load(imported)
                 }}
               >
-                ใช้เกมที่เคยรีวิวในเครื่อง
+                {translate('ใช้เกมที่เคยรีวิวในเครื่อง', 'Use locally reviewed games')}
               </button>
             )}
           </form>

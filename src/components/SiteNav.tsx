@@ -1,38 +1,49 @@
+import { changeLocale, locale, translate } from '../i18n/locale'
 import { onlineEnabled } from '../pages/Online/feature'
 import { openingTrainerEnabled } from '../pages/Opening/feature'
 import { puzzlesEnabled } from '../pages/Puzzles/feature'
 
 const links = [
-  { page: 'play', href: './', label: 'เล่นกับบอท', enabled: true },
-  { page: 'review', href: '?view=review', label: 'รีวิวเกม', enabled: true },
+  {
+    page: 'play',
+    href: './',
+    label: translate('เล่นกับบอท', 'Play Bot'),
+    enabled: true,
+  },
+  {
+    page: 'review',
+    href: '?view=review',
+    label: translate('รีวิวเกม', 'Game Review'),
+    enabled: true,
+  },
   {
     page: 'opening',
     href: '?view=opening',
-    label: 'ฝึกเปิดเกม',
+    label: translate('ฝึกเปิดเกม', 'Openings'),
     enabled: openingTrainerEnabled,
   },
   {
     page: 'puzzles',
     href: '?view=puzzles',
-    label: 'โจทย์หมากรุก',
+    label: translate('โจทย์หมากรุก', 'Puzzles'),
     enabled: puzzlesEnabled,
   },
   {
     page: 'online',
     href: '?view=online',
-    label: 'เล่นกับเพื่อน',
+    label: translate('เล่นกับเพื่อน', 'Play a Friend'),
     enabled: onlineEnabled,
   },
   {
     page: 'account',
     href: '?view=account',
-    label: 'บัญชี',
+    label: translate('บัญชี', 'Account'),
     enabled: true,
   },
   {
     page: 'smoke',
     href: '?view=smoke',
-    label: 'ทดสอบ Stockfish',
+    label: translate('ทดสอบ Stockfish', 'Stockfish Test'),
     enabled: true,
   },
 ] as const
@@ -51,9 +62,26 @@ export function SiteNav({
         >
           ChessLens
         </a>
+        <label className="ml-auto md:order-3 md:ml-0">
+          <span className="sr-only">{translate('ภาษา', 'Language')}</span>
+          <select
+            className="control min-h-10"
+            value={locale}
+            onChange={(event) =>
+              changeLocale(event.target.value === 'en' ? 'en' : 'th')
+            }
+          >
+            <option value="th" lang="th">
+              ไทย
+            </option>
+            <option value="en" lang="en">
+              English
+            </option>
+          </select>
+        </label>
         <nav
-          aria-label="เมนูหลัก"
-          className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-2"
+          aria-label={translate('เมนูหลัก', 'Main navigation')}
+          className="order-2 flex w-full min-w-0 flex-wrap items-center gap-1 sm:gap-2 md:w-auto md:flex-1 md:justify-end"
         >
           {links
             .filter(({ enabled }) => enabled)

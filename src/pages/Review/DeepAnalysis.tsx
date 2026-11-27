@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { useEffect, useRef, useState } from 'react'
 import { decodeEvaluation } from '../../analysis/review'
 import { formatScore } from '../../analysis/score'
@@ -51,10 +52,12 @@ export function DeepAnalysis({
 
   return (
     <details className="mt-3 border-t border-line pt-2 text-sm">
-      <summary className="cursor-pointer">วิเคราะห์ตำแหน่งนี้ให้ลึกขึ้น</summary>
+      <summary className="cursor-pointer">
+        {translate('วิเคราะห์ตำแหน่งนี้ให้ลึกขึ้น', 'Analyze this position more deeply')}
+      </summary>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <label>
-          แนวเดิน{' '}
+          {translate('แนวเดิน', 'Lines')}{' '}
           <select
             className="control"
             disabled={busy}
@@ -71,7 +74,7 @@ export function DeepAnalysis({
           disabled={busy}
           onClick={() => void start()}
         >
-          วิเคราะห์เพิ่ม
+          {translate('วิเคราะห์เพิ่ม', 'Analyze further')}
         </button>
         {busy && (
           <button
@@ -81,12 +84,20 @@ export function DeepAnalysis({
               setBusy(false)
             }}
           >
-            หยุด
+            {translate('หยุด', 'Stop')}
           </button>
         )}
       </div>
-      {busy && <p role="status">กำลังวิเคราะห์ตำแหน่ง…</p>}
-      {error && <p role="status">วิเคราะห์ตำแหน่งไม่สำเร็จ</p>}
+      {busy && (
+        <p role="status">
+          {translate('กำลังวิเคราะห์ตำแหน่ง…', 'Analyzing position…')}
+        </p>
+      )}
+      {error && (
+        <p role="status">
+          {translate('วิเคราะห์ตำแหน่งไม่สำเร็จ', 'Position analysis failed')}
+        </p>
+      )}
       {result && (
         <ol className="mt-2 space-y-1">
           {result.lines.map((line) => (

@@ -1,3 +1,4 @@
+import { translate } from '../../i18n/locale'
 import { useState } from 'react'
 import { Chess, type Color, type Square } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
@@ -31,13 +32,15 @@ export function Practice({
   return (
     <section className="panel space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">ฝึกจากตาพลาด</h2>
+        <h2 className="font-semibold">
+          {translate('ฝึกจากตาพลาด', 'Practice mistakes')}
+        </h2>
         <button className="control" onClick={onClose}>
-          กลับไปหน้ารีวิว
+          {translate('กลับไปหน้ารีวิว', 'Back to review')}
         </button>
       </div>
       <label className="text-sm">
-        ฝึกฝ่าย{' '}
+        {translate('ฝึกฝ่าย', 'Practice as')}{' '}
         <select
           className="control"
           value={side}
@@ -46,16 +49,27 @@ export function Practice({
             setIndex(0)
           }}
         >
-          <option value="w">ขาว</option>
-          <option value="b">ดำ</option>
+          <option value="w">{translate('ขาว', 'White')}</option>
+          <option value="b">{translate('ดำ', 'Black')}</option>
         </select>
       </label>
       {entries[index] === undefined ? (
-        <p>{entries.length ? 'ฝึกครบแล้ว' : 'ไม่มีตาพลาดที่ใช้ฝึกสำหรับฝ่ายนี้'}</p>
+        <p>
+          {entries.length
+            ? translate('ฝึกครบแล้ว', 'Practice complete')
+            : translate(
+                'ไม่มีตาพลาดที่ใช้ฝึกสำหรับฝ่ายนี้',
+                'No mistakes to practice for this side',
+              )}
+        </p>
       ) : (
         <>
           <p>
-            ข้อ {index + 1} / {entries.length} · หาตาที่ Stockfish แนะนำ
+            {translate('ข้อ', 'Puzzle')} {index + 1} / {entries.length}{' '}
+            {translate(
+              '· หาตาที่ Stockfish แนะนำ',
+              '· Find Stockfish’s recommended move',
+            )}
           </p>
           <Exercise
             key={entries[index]}
@@ -68,7 +82,7 @@ export function Practice({
       )}
       {index === entries.length && index > 0 && (
         <button className="control" onClick={() => setIndex(0)}>
-          เริ่มฝึกใหม่
+          {translate('เริ่มฝึกใหม่', 'Restart practice')}
         </button>
       )}
     </section>
@@ -150,7 +164,11 @@ function Exercise({
         }}
       />
       {promotion && (
-        <div role="group" aria-label="เลื่อนขั้นเบี้ย" className="flex gap-2">
+        <div
+          role="group"
+          aria-label={translate('เลื่อนขั้นเบี้ย', 'Promote pawn')}
+          className="flex gap-2"
+        >
           {['q', 'r', 'b', 'n'].map((piece) => (
             <button
               className="control uppercase"
@@ -164,14 +182,18 @@ function Exercise({
       )}
       <p role="status">
         {state === 'wrong'
-          ? 'ลองหาตาอื่นอีกครั้ง'
+          ? translate('ลองหาตาอื่นอีกครั้ง', 'Try another move')
           : state === 'correct'
-            ? 'ถูกต้อง · ' + best.san
+            ? translate('ถูกต้อง · ', 'Correct · ') + best.san
             : state === 'reveal'
-              ? 'เฉลย · ' + best.san
+              ? translate('เฉลย · ', 'Solution · ') + best.san
               : hint
-                ? 'ลองเดินหมากจากช่อง ' + from
-                : 'เลือกหมากแล้วเลือกช่อง หรือใช้การลาก'}
+                ? translate('ลองเดินหมากจากช่อง ', 'Try moving the piece on ') +
+                  from
+                : translate(
+                    'เลือกหมากแล้วเลือกช่อง หรือใช้การลาก',
+                    'Click a piece and destination, or drag it',
+                  )}
       </p>
       <div className="flex flex-wrap gap-2">
         <button
@@ -179,7 +201,7 @@ function Exercise({
           disabled={done || hint}
           onClick={() => setHint(true)}
         >
-          คำใบ้
+          {translate('คำใบ้', 'Hint')}
         </button>
         <button
           className="control"
@@ -189,10 +211,10 @@ function Exercise({
             setState('reveal')
           }}
         >
-          เฉลย
+          {translate('เฉลย', 'Solution')}
         </button>
         <button className="control" disabled={!done} onClick={onNext}>
-          ข้อถัดไป
+          {translate('ข้อถัดไป', 'Next puzzle')}
         </button>
       </div>
     </div>

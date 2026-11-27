@@ -1,3 +1,4 @@
+import { translate } from '../i18n/locale'
 import { registerOffline } from './register'
 import { useEffect, useState } from 'react'
 
@@ -75,24 +76,32 @@ export function AppInstallation() {
               void prompt.prompt().catch(() => setShowHelp(true))
             }}
           >
-            ติดตั้ง ChessLens
+            {translate('ติดตั้ง ChessLens', 'Install ChessLens')}
           </button>
         )}
         <span className="text-sm text-secondary" role="status">
-          การเชื่อมต่อ: {online ? 'ออนไลน์' : 'ออฟไลน์'}
+          {translate('การเชื่อมต่อ:', 'Connection:')}{' '}
+          {online
+            ? translate('ออนไลน์', 'Online')
+            : translate('ออฟไลน์', 'Offline')}
         </span>
       </div>
       <p className="text-sm text-secondary" role="status">
         {ready
-          ? 'พร้อมใช้งานออฟไลน์'
+          ? translate('พร้อมใช้งานออฟไลน์', 'Ready to use offline')
           : failed
-            ? 'เตรียมออฟไลน์ไม่สำเร็จ ลองเปิดหน้านี้ใหม่'
-            : 'กำลังเตรียมใช้งานออฟไลน์…'}
+            ? translate(
+                'เตรียมออฟไลน์ไม่สำเร็จ ลองเปิดหน้านี้ใหม่',
+                'Offline setup failed. Try reloading this page.',
+              )
+            : translate('กำลังเตรียมใช้งานออฟไลน์…', 'Setting up offline access…')}
       </p>
       {showHelp && (
         <p className="text-sm text-secondary">
-          เลือกติดตั้งแอปจากเมนูเบราว์เซอร์ หรือบน iPhone เปิดด้วย Safari แล้วเลือกแชร์ →
-          เพิ่มไปยังหน้าจอโฮม
+          {translate(
+            'เลือกติดตั้งแอปจากเมนูเบราว์เซอร์ หรือบน iPhone เปิดด้วย Safari แล้วเลือกแชร์ → เพิ่มไปยังหน้าจอโฮม',
+            'Choose Install from the browser menu. On iPhone, open in Safari and choose Share → Add to Home Screen.',
+          )}
         </p>
       )}
     </div>
