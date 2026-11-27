@@ -13,6 +13,7 @@ import {
 import { useGameStore } from '../../store'
 import type { ColorChoice } from '../../store/game-store'
 import { useBot } from './use-bot'
+import { useHint } from './use-hint'
 
 const colorLabel = (color: Color) => (color === 'w' ? text.white : text.black)
 const glyphs: Record<Color, Record<PieceSymbol, string>> = {
@@ -47,6 +48,8 @@ export function PlayPage() {
   const { captures, balance } = summarizeMaterial(history.slice(0, ply), fen)
   const live = ply === history.length
   const canMove = !outcome && !botTurn && !bot.offering && live
+  const hint = useHint(game, fen, canMove)
+  const suggested = typeof hint.current === 'object' ? hint.current : undefined
   const status = outcome
     ? outcome.winner
       ? text.winner(colorLabel(outcome.winner), text.reasons[outcome.reason])
@@ -109,6 +112,7 @@ export function PlayPage() {
                 game={game}
                 fen={fen}
                 lastMove={lastMove}
+                hint={suggested}
                 orientation={orientation}
                 canMove={canMove}
                 play={(move) => state.play(move, game, 'player')}
@@ -125,6 +129,16 @@ export function PlayPage() {
             <p role="status" className="font-semibold text-accent">
               {status}
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button className="control" disabled={!canMove || hint.current === 'thinking' || !!suggested}
+                onClick={() => void hint.request()}>คำใบ้</button>
+              <p className="text-sm text-secondary" role="status">
+                {suggested ? <>Stockfish แนะนำ <strong className="font-mono text-accent">{suggested.san}</strong></>
+                  : hint.current === 'thinking' ? 'กำลังหาคำใบ้…'
+                  : hint.current === 'error' ? 'หาคำใบ้ไม่สำเร็จ ลองอีกครั้ง'
+                  : null}
+              </p>
+            </div>
             {bot.notice &&
               !(botTurn && bot.notice === 'engineError') &&
               !outcome && (

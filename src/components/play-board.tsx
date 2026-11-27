@@ -5,7 +5,7 @@ import {
   type PieceSymbol,
   type Square,
 } from 'chess.js'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { playMessages as text } from '../i18n'
 
@@ -22,6 +22,7 @@ type Props = {
   fen: string
   orientation: Color
   canMove: boolean
+  hint?: { from: Square; to: Square }
   lastMove?: { from: Square; to: Square }
   play: (move: { from: Square; to: Square; promotion?: PieceSymbol }) => boolean
 }
@@ -32,6 +33,7 @@ export function PlayBoard({
   orientation,
   canMove,
   lastMove,
+  hint,
   play,
 }: Props) {
   const [selection, setSelection] = useState<{
@@ -39,6 +41,10 @@ export function PlayBoard({
     game: Game
   } | null>(null)
   const [promotion, setPromotion] = useState<Promotion | null>(null)
+  const hintArrows = useMemo<[Square, Square, string][]>(
+    () => (hint ? [[hint.from, hint.to, '#97ff12']] : []),
+    [hint],
+  )
   const dialog = useRef<HTMLDialogElement>(null)
   const selected = canMove && selection?.game === game ? selection.square : null
   const pending = canMove && promotion?.game === game ? promotion : null
@@ -124,6 +130,7 @@ export function PlayBoard({
         customLightSquareStyle={{ backgroundColor: 'var(--board-light)' }}
         customDarkSquareStyle={{ backgroundColor: 'var(--board-dark)' }}
         customSquareStyles={styles}
+        customArrows={hintArrows}
         animationDuration={140}
         showPromotionDialog={false}
       />
