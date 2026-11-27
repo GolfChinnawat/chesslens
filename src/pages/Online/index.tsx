@@ -38,6 +38,99 @@ function clock(ms: number) {
   return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0')
 }
 
+function MatchClock({
+  color,
+  ms,
+  active,
+  yours,
+}: {
+  color: 'w' | 'b'
+  ms: number
+  active: boolean
+  yours: boolean
+}) {
+  const label = color === 'w' ? 'ขาว' : 'ดำ'
+  const low = ms <= 30_000
+  return (
+    <div
+      className={`min-w-0 rounded-lg border px-3 py-2 ${active ? 'border-accent bg-accent/10' : 'border-line bg-surface'}`}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm font-semibold">
+        <span>
+          ฝ่าย{label}
+          {yours ? ' · คุณ' : ''}
+        </span>
+        {active && <span className="text-xs text-accent">กำลังนับ</span>}
+      </div>
+      <span
+        aria-label={`เวลาฝ่าย${label}`}
+        className={`block font-mono text-3xl font-bold tabular-nums sm:text-4xl ${low ? 'text-rose-300' : 'text-foreground'}`}
+      >
+        {clock(ms)}
+      </span>
+    </div>
+  )
+}
+
+function MatchResult({
+  result,
+  reason,
+  side,
+  onReview,
+}: {
+  result: string
+  reason: string
+  side: 'w' | 'b'
+  onReview?: () => void
+}) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  const title =
+    result === '1/2-1/2'
+      ? 'เสมอ'
+      : result === (side === 'w' ? '1-0' : '0-1')
+        ? 'คุณชนะ'
+        : 'คุณแพ้'
+
+  useEffect(() => {
+    const element = dialog.current
+    element?.showModal()
+    return () => element?.close()
+  }, [])
+
+  return (
+    <>
+      <button className="control" onClick={() => dialog.current?.showModal()}>
+        ดูผลการแข่งขัน
+      </button>
+      <dialog
+        ref={dialog}
+        aria-labelledby="match-result-heading"
+        className="panel m-auto w-[min(24rem,calc(100%-2rem))] space-y-4 text-foreground backdrop:bg-black/70"
+      >
+        <h2
+          id="match-result-heading"
+          className="text-3xl font-bold text-accent"
+        >
+          {title}
+        </h2>
+        <p className="text-secondary">
+          ผล {result} · {reason}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {onReview && (
+            <button className="control primary-control" onClick={onReview}>
+              รีวิวเกมนี้
+            </button>
+          )}
+          <form method="dialog">
+            <button className="control">ปิดผลการแข่งขัน</button>
+          </form>
+        </div>
+      </dialog>
+    </>
+  )
+}
+
 export default function OnlinePage() {
   const [id, setId] = useState(
     () => new URLSearchParams(location.search).get('room') ?? '',
@@ -50,6 +143,7 @@ export default function OnlinePage() {
   const [minutes, setMinutes] = useState(10)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [sendingMove, setSendingMove] = useState(false)
   const [online, setOnline] = useState(navigator.onLine)
   const [now, setNow] = useState(Date.now)
   const clockOffset = useRef(0)
@@ -158,6 +252,7 @@ export default function OnlinePage() {
     if (!cloud || pending.current || !navigator.onLine) return
     pending.current = true
     setBusy(true)
+    setSendingMove(action === 'move')
     setMessage('')
     try {
       const { data, error } = await cloud.functions.invoke<{
@@ -211,10 +306,15 @@ export default function OnlinePage() {
       setMessage('ติดต่อห้องไม่ได้ ลองอีกครั้ง')
     } finally {
       setBusy(false)
+      setSendingMove(false)
       pending.current = false
     }
   }
 
+  const lastMove = useMemo(
+    () => chess.history({ verbose: true }).at(-1),
+    [chess],
+  )
   const side = activeRoom?.black_id === user ? 'b' : 'w'
   const elapsed = running
     ? Math.max(
@@ -266,7 +366,7 @@ export default function OnlinePage() {
       </header>
       {!online && (
         <p role="status" className="panel">
-          ออฟไลน์ · เมื่อกลับมาออนไลน์ ระบบจะโหลดห้องล่าสุด
+          การเชื่อมต่อหลุด · นาฬิกาเกมยังเดิน เมื่อกลับมาออนไลน์ระบบจะโหลดห้องล่าสุด
         </p>
       )}
       {message && (
@@ -354,45 +454,84 @@ export default function OnlinePage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <section className="panel w-full max-w-xl" aria-label="กระดานออนไลน์">
-            <PlayBoard
-              game={chess}
-              fen={chess.fen()}
-              orientation={side}
-              canMove={
-                online && running && !expired && !busy && chess.turn() === side
-              }
-              play={({ from, to, promotion }) => {
-                void send('move', from + to + (promotion ?? ''))
-                return false
-              }}
-            />
+          <section
+            className="w-full max-w-xl space-y-2"
+            aria-label="กระดานออนไลน์"
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <MatchClock
+                color="w"
+                ms={white}
+                active={running && chess.turn() === 'w'}
+                yours={side === 'w'}
+              />
+              <MatchClock
+                color="b"
+                ms={black}
+                active={running && chess.turn() === 'b'}
+                yours={side === 'b'}
+              />
+            </div>
+            <div className="panel">
+              <PlayBoard
+                game={chess}
+                fen={chess.fen()}
+                orientation={side}
+                lastMove={lastMove}
+                canMove={
+                  online &&
+                  running &&
+                  !expired &&
+                  !busy &&
+                  chess.turn() === side
+                }
+                play={({ from, to, promotion }) => {
+                  void send('move', from + to + (promotion ?? ''))
+                  return false
+                }}
+              />
+            </div>
           </section>
           <section className="panel space-y-3">
             <h2 className="font-semibold">
               ห้องส่วนตัว · คุณเล่นฝ่าย{side === 'w' ? 'ขาว' : 'ดำ'}
             </h2>
-            <div className="grid grid-cols-2 gap-2 font-mono tabular-nums">
-              <div className="rounded bg-raised p-2">
-                ขาว <span aria-label="เวลาฝ่ายขาว">{clock(white)}</span>
-              </div>
-              <div className="rounded bg-raised p-2">
-                ดำ <span aria-label="เวลาฝ่ายดำ">{clock(black)}</span>
-              </div>
-            </div>
-            <p role="status">
+            <p
+              role="status"
+              className="rounded-lg bg-raised px-3 py-2 font-semibold"
+            >
               {activeRoom.result
                 ? activeRoom.result +
                   ' · ' +
                   (reasons[activeRoom.reason ?? ''] ?? 'จบเกม')
-                : !activeRoom.black_id
-                  ? 'รอเพื่อนเข้าห้อง'
-                  : expired
-                    ? 'รอยืนยันผลหมดเวลา'
-                    : chess.turn() === side
-                      ? 'ตาของคุณ'
-                      : 'รอคู่แข่งเดิน'}
+                : sendingMove
+                  ? 'กำลังส่งตาเดิน…'
+                  : !activeRoom.black_id
+                    ? 'รอเพื่อนเข้าห้อง'
+                    : expired
+                      ? 'รอยืนยันผลหมดเวลา'
+                      : chess.turn() === side
+                        ? 'ตาของคุณ'
+                        : 'รอคู่แข่งเดิน'}
             </p>
+            {lastMove && (
+              <p className="text-sm text-secondary">
+                เดินล่าสุด · ฝ่าย{lastMove.color === 'w' ? 'ขาว' : 'ดำ'}{' '}
+                <strong className="font-mono text-foreground">
+                  {lastMove.san}
+                </strong>
+              </p>
+            )}
+            {running &&
+              !expired &&
+              (side === 'w' ? white : black) <= 30_000 && (
+                <p
+                  role="status"
+                  className="text-sm font-semibold text-rose-300"
+                >
+                  เวลาของคุณเหลือ 30 วินาทีหรือน้อยกว่า
+                </p>
+              )}
             {!activeRoom.black_id && (
               <>
                 {activeRoom.room_code && (
@@ -437,11 +576,13 @@ export default function OnlinePage() {
             )}
             {activeRoom.result ? (
               <div className="flex flex-wrap gap-2">
-                {chess.history().length > 0 && (
-                  <button className="control primary-control" onClick={review}>
-                    รีวิวเกมนี้
-                  </button>
-                )}
+                <MatchResult
+                  key={activeRoom.id}
+                  result={activeRoom.result}
+                  reason={reasons[activeRoom.reason ?? ''] ?? 'จบเกม'}
+                  side={side}
+                  onReview={lastMove ? review : undefined}
+                />
                 <a href="?view=online" className="control">
                   สร้างห้องใหม่
                 </a>
