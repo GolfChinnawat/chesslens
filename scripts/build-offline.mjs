@@ -19,12 +19,20 @@ for (const asset of assets) {
   hash.update(await readFile('dist/' + asset))
 }
 
+const version = hash.digest('hex').slice(0, 16)
+const shell = 'assets/app-shell-' + version + '.html'
+await writeFile('dist/' + shell, await readFile('dist/index.html'))
 await writeFile(
   'dist/sw.js',
   'const version = ' +
-    JSON.stringify(hash.digest('hex').slice(0, 16)) +
+    JSON.stringify(version) +
+    '\nconst shell = ' +
+    JSON.stringify(shell) +
     '\nconst assets = ' +
-    JSON.stringify(assets) +
+    JSON.stringify([
+      ...assets.filter((asset) => asset !== 'index.html'),
+      shell,
+    ]) +
     '\n\n' +
     worker,
 )

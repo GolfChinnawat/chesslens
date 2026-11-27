@@ -1,9 +1,11 @@
-/* global assets, version */
+/* global assets, version, shell */
 const scope = new URL(self.registration.scope)
 const prefix = 'chesslens-offline:' + scope.pathname + ':'
 const cacheName = prefix + version
 const files = new Set(assets.map((path) => new URL(path, scope).href))
-const home = new URL('index.html', scope).href
+const home = new URL(shell, scope).href
+const indexPath = new URL('index.html', scope).pathname
+const routeKeys = new Set(['view', 'room', 'online'])
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -37,17 +39,13 @@ self.addEventListener('fetch', (event) => {
 
   const appNavigation =
     request.mode === 'navigate' &&
-    (url.pathname === scope.pathname ||
-      url.pathname === new URL(home).pathname) &&
-    [...url.searchParams.keys()].every((key) => key === 'view')
+    (url.pathname === scope.pathname || url.pathname === indexPath) &&
+    [...url.searchParams.keys()].every((key) => routeKeys.has(key))
 
   if (appNavigation) {
     event.respondWith(
-      fetch(request).catch(
-        async () =>
-          (await (await caches.open(cacheName)).match(home)) ??
-          Response.error(),
-      ),
+      (async () =>
+        (await (await caches.open(cacheName)).match(home)) ?? fetch(request))(),
     )
   } else if (files.has(url.href)) {
     event.respondWith(

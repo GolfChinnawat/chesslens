@@ -1,3 +1,4 @@
+import { registerOffline } from './register'
 import { useEffect, useState } from 'react'
 
 type InstallEvent = Event & {
@@ -38,9 +39,7 @@ export function AppInstallation() {
     }
     window.addEventListener('beforeinstallprompt', offer)
     window.addEventListener('appinstalled', clearPrompt)
-    const worker = new URL(import.meta.env.BASE_URL + 'sw.js', document.baseURI)
-    void navigator.serviceWorker
-      .register(worker)
+    void registerOffline()
       .then((registration) => {
         const current = registration.installing
         current?.addEventListener('statechange', () => {

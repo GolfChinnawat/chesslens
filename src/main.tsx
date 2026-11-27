@@ -5,6 +5,7 @@ import { openingTrainerEnabled } from './pages/Opening/feature'
 import { puzzlesEnabled } from './pages/Puzzles/feature'
 import { onlineEnabled } from './pages/Online/feature'
 import { SiteNav } from './components/SiteNav'
+import { registerOffline } from './pwa/register'
 import './styles.css'
 
 const AccountPage = lazy(() => import('./pages/Account'))
@@ -26,6 +27,11 @@ const pages = {
 const current =
   view && Object.hasOwn(pages, view) ? (view as keyof typeof pages) : 'play'
 const Page = pages[current] ?? PlayPage
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator)
+  void registerOffline().catch(() => {
+    // The site can still run online if the browser declines installation.
+  })
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing application root')
