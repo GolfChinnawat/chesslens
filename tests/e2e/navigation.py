@@ -20,6 +20,10 @@ with sync_playwright() as playwright:
             links = nav.get_by_role("link")
             expect(links).to_have_count(len(views))
             expect(nav.locator('[aria-current="page"]')).to_have_attribute("href", href)
+            active = nav.locator('[aria-current="page"]').inner_text()
+            expect(page.get_by_text("หน้าปัจจุบัน", exact=True).locator("..")).to_have_text(
+                "หน้าปัจจุบัน" + active
+            )
             brand = page.get_by_role("link", name="ChessLens", exact=True)
             expect(brand).to_be_visible()
             positions = links.evaluate_all(

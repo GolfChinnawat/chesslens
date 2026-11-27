@@ -42,6 +42,8 @@ export function SiteNav({
 }: {
   current: (typeof links)[number]['page']
 }) {
+  const activeLabel = links.find(({ page }) => page === current)?.label
+
   return (
     <header className="mx-auto w-full max-w-[79rem] px-4 pt-3 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line pb-3">
@@ -62,13 +64,17 @@ export function SiteNav({
                 key={page}
                 href={href}
                 aria-current={page === current ? 'page' : undefined}
-                className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold whitespace-nowrap text-muted hover:bg-raised hover:text-accent aria-current:bg-raised aria-current:text-accent"
+                className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold whitespace-nowrap text-muted hover:bg-raised hover:text-accent aria-current:bg-accent/15 aria-current:text-accent aria-current:shadow-[inset_0_-2px_var(--color-accent)]"
               >
                 {label}
               </a>
             ))}
         </nav>
       </div>
+      <p className="mt-2 flex items-baseline gap-2 text-sm">
+        <span className="text-muted">หน้าปัจจุบัน</span>
+        <strong className="text-foreground">{activeLabel}</strong>
+      </p>
     </header>
   )
 }
